@@ -1,8 +1,14 @@
 .vscode/**
+.agents/**
+.git/**
+.gitignore
 src/**
 test/**
 design.md
 esbuild.mjs
 tsconfig.json
+package-lock.json
 node_modules/**
+dist/**/*.map
 *.log
+*.vsix

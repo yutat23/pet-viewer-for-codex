@@ -72,7 +72,7 @@ export class AppServerClient {
       params: {
         clientInfo: {
           name: "codex_pet_viewer",
-          title: "Codex Pet Viewer for VS Code",
+          title: "Pet Viewer for Codex",
           version: "0.4.0"
         }
       }

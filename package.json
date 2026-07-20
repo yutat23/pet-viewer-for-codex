@@ -1,15 +1,34 @@
 {
-  "name": "codex-pet-viewer",
-  "displayName": "Codex Pet",
+  "name": "pet-viewer-for-codex",
+  "displayName": "Pet Viewer for Codex",
   "description": "Display locally installed Codex pets beside the VS Code terminal.",
   "version": "0.5.1",
-  "publisher": "local",
-  "license": "MIT",
+  "publisher": "yutat23",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": {
+    "name": "yutat23"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yutat23/pet-viewer-for-codex.git"
+  },
+  "homepage": "https://github.com/yutat23/pet-viewer-for-codex#readme",
+  "bugs": {
+    "url": "https://github.com/yutat23/pet-viewer-for-codex/issues"
+  },
+  "pricing": "Free",
   "engines": {
     "vscode": "^1.90.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "codex",
+    "pet",
+    "mascot",
+    "animation",
+    "terminal"
   ],
   "activationEvents": [
     "onView:codexPet.panelView",
@@ -34,10 +53,10 @@
       "terminal": [
         {
           "id": "codexPet.panelView",
-          "name": "Codex Pet",
+          "name": "Pet Viewer",
           "type": "webview",
           "icon": "media/paw.svg",
-          "contextualTitle": "Codex Pet"
+          "contextualTitle": "Pet Viewer for Codex"
         }
       ]
     },
@@ -45,81 +64,81 @@
       {
         "command": "codexPet.selectPet",
         "title": "Change Pet",
-        "category": "Codex Pet",
+        "category": "Pet Viewer for Codex",
         "icon": "$(list-selection)"
       },
       {
         "command": "codexPet.setIdle",
         "title": "Set State: Idle",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       },
       {
         "command": "codexPet.setRunning",
         "title": "Set State: Running",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       },
       {
         "command": "codexPet.setWaiting",
         "title": "Set State: Waiting",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       },
       {
         "command": "codexPet.setReview",
         "title": "Set State: Review",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       },
       {
         "command": "codexPet.setFailed",
         "title": "Set State: Failed",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       },
       {
         "command": "codexPet.refreshPets",
         "title": "Refresh Pets",
-        "category": "Codex Pet",
+        "category": "Pet Viewer for Codex",
         "icon": "$(refresh)"
       },
       {
         "command": "codexPet.openPetsDirectory",
         "title": "Open Pets Directory",
-        "category": "Codex Pet",
+        "category": "Pet Viewer for Codex",
         "icon": "$(folder-opened)"
       },
       {
         "command": "codexPet.previewPet",
         "title": "Open Pet Preview",
-        "category": "Codex Pet",
+        "category": "Pet Viewer for Codex",
         "icon": "$(open-preview)"
       },
       {
         "command": "codexPet.startAppServer",
         "title": "Start Managed App Server",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       },
       {
         "command": "codexPet.stopAppServer",
         "title": "Stop Managed App Server",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       },
       {
         "command": "codexPet.restartAppServer",
         "title": "Restart Managed App Server",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       },
       {
         "command": "codexPet.installHooks",
         "title": "Install Codex Hooks Integration",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       },
       {
         "command": "codexPet.uninstallHooks",
         "title": "Uninstall Codex Hooks Integration",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       },
       {
         "command": "codexPet.openHooksConfiguration",
         "title": "Open Codex Hooks Configuration",
-        "category": "Codex Pet"
+        "category": "Pet Viewer for Codex"
       }
     ],
     "menus": {
@@ -149,12 +168,12 @@
       ]
     },
     "configuration": {
-      "title": "Codex Pet",
+      "title": "Pet Viewer for Codex",
       "properties": {
         "codexPet.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable the Codex Pet view."
+          "description": "Enable the Pet Viewer for Codex view."
         },
         "codexPet.petDirectory": {
           "type": "string",
@@ -210,6 +229,7 @@
     }
   },
   "scripts": {
+    "vscode:prepublish": "npm run check && npm test && npm run build",
     "build": "node esbuild.mjs --production",
     "check": "tsc --noEmit",
     "compile": "node esbuild.mjs",
