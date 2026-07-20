@@ -1,0 +1,226 @@
+{
+  "name": "codex-pet-viewer",
+  "displayName": "Codex Pet",
+  "description": "Display locally installed Codex pets beside the VS Code terminal.",
+  "version": "0.5.1",
+  "publisher": "local",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:codexPet.panelView",
+    "onCommand:codexPet.selectPet",
+    "onCommand:codexPet.setIdle",
+    "onCommand:codexPet.setRunning",
+    "onCommand:codexPet.setWaiting",
+    "onCommand:codexPet.setReview",
+    "onCommand:codexPet.setFailed",
+    "onCommand:codexPet.refreshPets",
+    "onCommand:codexPet.openPetsDirectory",
+    "onCommand:codexPet.startAppServer",
+    "onCommand:codexPet.stopAppServer",
+    "onCommand:codexPet.restartAppServer",
+    "onCommand:codexPet.installHooks",
+    "onCommand:codexPet.uninstallHooks",
+    "onCommand:codexPet.openHooksConfiguration"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "views": {
+      "terminal": [
+        {
+          "id": "codexPet.panelView",
+          "name": "Codex Pet",
+          "type": "webview",
+          "icon": "media/paw.svg",
+          "contextualTitle": "Codex Pet"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "codexPet.selectPet",
+        "title": "Change Pet",
+        "category": "Codex Pet",
+        "icon": "$(list-selection)"
+      },
+      {
+        "command": "codexPet.setIdle",
+        "title": "Set State: Idle",
+        "category": "Codex Pet"
+      },
+      {
+        "command": "codexPet.setRunning",
+        "title": "Set State: Running",
+        "category": "Codex Pet"
+      },
+      {
+        "command": "codexPet.setWaiting",
+        "title": "Set State: Waiting",
+        "category": "Codex Pet"
+      },
+      {
+        "command": "codexPet.setReview",
+        "title": "Set State: Review",
+        "category": "Codex Pet"
+      },
+      {
+        "command": "codexPet.setFailed",
+        "title": "Set State: Failed",
+        "category": "Codex Pet"
+      },
+      {
+        "command": "codexPet.refreshPets",
+        "title": "Refresh Pets",
+        "category": "Codex Pet",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "codexPet.openPetsDirectory",
+        "title": "Open Pets Directory",
+        "category": "Codex Pet",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "codexPet.previewPet",
+        "title": "Open Pet Preview",
+        "category": "Codex Pet",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "codexPet.startAppServer",
+        "title": "Start Managed App Server",
+        "category": "Codex Pet"
+      },
+      {
+        "command": "codexPet.stopAppServer",
+        "title": "Stop Managed App Server",
+        "category": "Codex Pet"
+      },
+      {
+        "command": "codexPet.restartAppServer",
+        "title": "Restart Managed App Server",
+        "category": "Codex Pet"
+      },
+      {
+        "command": "codexPet.installHooks",
+        "title": "Install Codex Hooks Integration",
+        "category": "Codex Pet"
+      },
+      {
+        "command": "codexPet.uninstallHooks",
+        "title": "Uninstall Codex Hooks Integration",
+        "category": "Codex Pet"
+      },
+      {
+        "command": "codexPet.openHooksConfiguration",
+        "title": "Open Codex Hooks Configuration",
+        "category": "Codex Pet"
+      }
+    ],
+    "menus": {
+      "webview/context": [
+        {
+          "command": "codexPet.selectPet",
+          "when": "(webviewId == 'codexPet.panelView' || webviewId == 'codexPet.preview') && webviewSection == 'pet'",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "codexPet.refreshPets",
+          "when": "view == codexPet.panelView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "codexPet.openPetsDirectory",
+          "when": "view == codexPet.panelView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "codexPet.previewPet",
+          "when": "view == codexPet.panelView",
+          "group": "navigation@3"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Codex Pet",
+      "properties": {
+        "codexPet.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable the Codex Pet view."
+        },
+        "codexPet.petDirectory": {
+          "type": "string",
+          "default": "",
+          "description": "Override the Pet directory. Leave empty to use CODEX_HOME/pets. Reload the window after changing it."
+        },
+        "codexPet.scale": {
+          "type": "number",
+          "default": 0.75,
+          "minimum": 0.25,
+          "maximum": 3,
+          "description": "Pet image size multiplier. The image still shrinks responsively when the Terminal pane is smaller."
+        },
+        "codexPet.animationSpeed": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0.25,
+          "maximum": 3,
+          "description": "Animation speed multiplier."
+        },
+        "codexPet.pauseWhenHidden": {
+          "type": "boolean",
+          "default": true,
+          "description": "Pause animation while the Pet webview is hidden."
+        },
+        "codexPet.watchPetDirectory": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reload Pets automatically when files change."
+        },
+        "codexPet.integrationMode": {
+          "type": "string",
+          "enum": ["manual", "appServer", "hooks"],
+          "enumDescriptions": [
+            "Use state-changing commands only.",
+            "Use the App Server managed by this extension.",
+            "Reflect sessions from Codex Hooks, including the official Codex extension."
+          ],
+          "default": "manual",
+          "description": "Choose manual commands, the managed App Server, or Codex Hooks integration."
+        },
+        "codexPet.appServer.executable": {
+          "type": "string",
+          "default": "codex",
+          "description": "Codex CLI executable used for the managed App Server."
+        },
+        "codexPet.appServer.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Start the managed App Server automatically when integrationMode is appServer."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs --production",
+    "check": "tsc --noEmit",
+    "compile": "node esbuild.mjs",
+    "test": "vitest run",
+    "watch": "node esbuild.mjs --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}

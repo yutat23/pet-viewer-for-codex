@@ -1,0 +1,8 @@
+.vscode/**
+src/**
+test/**
+design.md
+esbuild.mjs
+tsconfig.json
+node_modules/**
+*.log
