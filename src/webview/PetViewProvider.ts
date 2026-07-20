@@ -50,7 +50,7 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
     }
     const panel = vscode.window.createWebviewPanel(
       "codexPet.preview",
-      "Codex Pet Preview",
+      "Pet Viewer for Codex Preview",
       vscode.ViewColumn.Beside,
       { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [this.extensionUri, vscode.Uri.file(this.petsDirectory)] }
     );

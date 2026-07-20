@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const petsDirectory = configuredPetDirectory
     ? path.resolve(configuredPetDirectory)
     : getPetsDirectory();
-  const output = vscode.window.createOutputChannel("Codex Pet");
+  const output = vscode.window.createOutputChannel("Pet Viewer for Codex");
   const log = (message: string): void => {
     output.appendLine(`[${new Date().toISOString()}] ${message}`);
   };
@@ -35,9 +35,9 @@ export function activate(context: vscode.ExtensionContext): void {
   );
   provider.setDisplayOptions(readDisplayOptions());
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 20);
-  status.name = "Codex Pet";
-  status.text = "$(loading~spin) Codex Pet";
-  status.tooltip = "Codex Pet is loading";
+  status.name = "Pet Viewer for Codex";
+  status.text = "$(loading~spin) Pet Viewer";
+  status.tooltip = "Pet Viewer for Codex is loading";
   status.command = "codexPet.focusPet";
   status.show();
   let appServerClient: AppServerClient | undefined;
@@ -63,10 +63,10 @@ export function activate(context: vscode.ExtensionContext): void {
       onConnectionState: (state) => {
         log(`App Server connection state: ${state}`);
         if (state === "connected") {
-          void vscode.window.setStatusBarMessage("Codex Pet: App Server connected", 3000);
+          void vscode.window.setStatusBarMessage("Pet Viewer for Codex: App Server connected", 3000);
         } else if (state === "error") {
           void vscode.window.showWarningMessage(
-            "Codex Pet could not connect to the managed App Server. See the Codex Pet output channel."
+            "Pet Viewer for Codex could not connect to the managed App Server. See its output channel."
           );
         }
       }
@@ -101,7 +101,7 @@ export function activate(context: vscode.ExtensionContext): void {
       hookEventReceiver = undefined;
       log(`Could not start Codex Hooks receiver: ${String(error)}`);
       void vscode.window.showWarningMessage(
-        "Codex Pet could not start the Hooks receiver. See the Codex Pet output channel."
+        "Pet Viewer for Codex could not start the Hooks receiver. See its output channel."
       );
     }
   };
@@ -170,37 +170,37 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("codexPet.installHooks", async () => {
       try {
         const result = await hookInstaller.install();
-        log(`Installed Codex Pet hooks in ${result.hooksPath}`);
+        log(`Installed Pet Viewer for Codex hooks in ${result.hooksPath}`);
         await vscode.workspace.getConfiguration("codexPet").update(
           "integrationMode",
           "hooks",
           vscode.ConfigurationTarget.Global
         );
         const choice = await vscode.window.showInformationMessage(
-          "Codex Pet Hooks installed. In Codex, run /hooks and trust the new command before using them.",
+          "Pet Viewer for Codex Hooks installed. In Codex, run /hooks and trust the new command before using them.",
           "Open hooks.json"
         );
         if (choice === "Open hooks.json") {
           await vscode.window.showTextDocument(vscode.Uri.file(result.hooksPath));
         }
       } catch (error) {
-        log(`Could not install Codex Pet hooks: ${String(error)}`);
-        void vscode.window.showErrorMessage(`Codex Pet Hooks installation failed: ${String(error)}`);
+        log(`Could not install Pet Viewer for Codex hooks: ${String(error)}`);
+        void vscode.window.showErrorMessage(`Pet Viewer for Codex Hooks installation failed: ${String(error)}`);
       }
     }),
     vscode.commands.registerCommand("codexPet.uninstallHooks", async () => {
       try {
         const result = await hookInstaller.uninstall();
-        log(`Removed Codex Pet hooks from ${result.hooksPath}`);
+        log(`Removed Pet Viewer for Codex hooks from ${result.hooksPath}`);
         stopHookReceiver();
         const configuration = vscode.workspace.getConfiguration("codexPet");
         if (configuration.get<string>("integrationMode") === "hooks") {
           await configuration.update("integrationMode", "manual", vscode.ConfigurationTarget.Global);
         }
-        void vscode.window.showInformationMessage("Codex Pet Hooks removed.");
+        void vscode.window.showInformationMessage("Pet Viewer for Codex Hooks removed.");
       } catch (error) {
-        log(`Could not remove Codex Pet hooks: ${String(error)}`);
-        void vscode.window.showErrorMessage(`Codex Pet Hooks removal failed: ${String(error)}`);
+        log(`Could not remove Pet Viewer for Codex hooks: ${String(error)}`);
+        void vscode.window.showErrorMessage(`Pet Viewer for Codex Hooks removal failed: ${String(error)}`);
       }
     }),
     vscode.commands.registerCommand("codexPet.openHooksConfiguration", async () => {
@@ -217,7 +217,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     provider.onDidChangePet((pet) => {
       if (!pet) {
-        status.text = "$(warning) Codex Pet";
+        status.text = "$(warning) Pet Viewer";
         status.tooltip = "No Codex Pet is currently available";
         return;
       }
