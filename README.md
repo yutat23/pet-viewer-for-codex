@@ -1,5 +1,7 @@
 # Pet Viewer for Codex
 
+![screenshot](media/screenshot.png)
+
 Bring your locally installed Codex pets into Visual Studio Code. The pet appears in the VS Code Panel, scales to fit the available space, and can react to Codex activity.
 
 > Pet Viewer for Codex is an unofficial third-party extension. It is not affiliated with or endorsed by OpenAI.

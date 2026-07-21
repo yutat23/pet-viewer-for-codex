@@ -23,6 +23,11 @@
   "categories": [
     "Other"
   ],
+  "icon": "media/icon.png",
+  "galleryBanner": {
+    "color": "#071217",
+    "theme": "dark"
+  },
   "keywords": [
     "codex",
     "pet",

@@ -3,6 +3,7 @@
 ## 0.6.0
 
 - Rename the extension to Pet Viewer for Codex.
+- Add a Marketplace icon featuring an original symbolic pixel cat.
 - Use the compact `PET` panel title and reduce space around the pet.
 - Add six selectable coarse pixel-art backgrounds rendered and animated with Canvas.
 - Add Outer Space, Engineering Office, Sunset Overlook, Night City, Server Room, and Secret Treehouse backgrounds.
