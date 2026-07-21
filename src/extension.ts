@@ -8,6 +8,7 @@ import { PetLoader } from "./pet/PetLoader.js";
 import { PetRepository } from "./pet/PetRepository.js";
 import type { PetState } from "./pet/types.js";
 import { PetViewProvider } from "./webview/PetViewProvider.js";
+import { isPetBackgroundId, type PetBackgroundId } from "./webview/backgrounds.js";
 
 const SELECTED_PET_KEY = "codexPet.selectedPet";
 
@@ -156,6 +157,7 @@ export function activate(context: vscode.ExtensionContext): void {
       webviewOptions: { retainContextWhenHidden: true }
     }),
     vscode.commands.registerCommand("codexPet.selectPet", () => provider.selectPet()),
+    vscode.commands.registerCommand("codexPet.selectBackground", () => provider.selectBackground()),
     vscode.commands.registerCommand("codexPet.refreshPets", () => provider.refresh()),
     vscode.commands.registerCommand("codexPet.openPetsDirectory", async () => {
       const uri = vscode.Uri.file(petsDirectory);
@@ -224,7 +226,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const icon = statusIcon(pet.state);
       const stateLabel = capitalize(pet.state);
       status.text = `${icon} ${pet.petName}: ${stateLabel}`;
-      status.tooltip = `Show ${pet.petName} beside the Terminal (${stateLabel})`;
+      status.tooltip = `Show ${pet.petName} in the PET view (${stateLabel})`;
     }),
     watcher.onDidCreate((uri) => watchEnabled() && scheduleRefresh("created", uri)),
     watcher.onDidChange((uri) => watchEnabled() && scheduleRefresh("changed", uri)),
@@ -281,13 +283,16 @@ function readDisplayOptions(): {
   scale: number;
   animationSpeed: number;
   pauseWhenHidden: boolean;
+  background: PetBackgroundId;
 } {
   const configuration = vscode.workspace.getConfiguration("codexPet");
+  const configuredBackground = configuration.get<string>("background", "grassland");
   return {
     enabled: configuration.get<boolean>("enabled", true),
-    scale: configuration.get<number>("scale", 0.75),
+    scale: configuration.get<number>("scale", 1),
     animationSpeed: configuration.get<number>("animationSpeed", 1),
-    pauseWhenHidden: configuration.get<boolean>("pauseWhenHidden", true)
+    pauseWhenHidden: configuration.get<boolean>("pauseWhenHidden", true),
+    background: isPetBackgroundId(configuredBackground) ? configuredBackground : "grassland"
   };
 }
 

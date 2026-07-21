@@ -6,6 +6,10 @@ import type { PetState } from "../pet/types.js";
 import type { ExtensionToWebviewMessage, PetViewModel } from "./messages.js";
 import { isWebviewMessage } from "./messages.js";
 import { getWebviewHtml } from "./getWebviewHtml.js";
+import {
+  petBackgroundsForDisplay,
+  type PetBackgroundId
+} from "./backgrounds.js";
 
 export class PetViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "codexPet.panelView";
@@ -13,9 +17,10 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
   private previewPanel: vscode.WebviewPanel | undefined;
   private displayOptions = {
     enabled: true,
-    scale: 0.75,
+    scale: 1,
     animationSpeed: 1,
-    pauseWhenHidden: true
+    pauseWhenHidden: true,
+    background: "grassland" as PetBackgroundId
   };
   private readonly stateMachine = new PetStateMachine();
   private readonly petChangeEmitter = new vscode.EventEmitter<
@@ -130,6 +135,27 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  public async selectBackground(): Promise<void> {
+    const selected = await vscode.window.showQuickPick(
+      petBackgroundsForDisplay().map((background) => ({
+        label: background.label,
+        description: background.description,
+        backgroundId: background.id,
+        picked: background.id === this.displayOptions.background
+      })),
+      { title: "Change Pet Background", placeHolder: "Choose a background for the PET view" }
+    );
+    if (!selected || selected.backgroundId === this.displayOptions.background) {
+      return;
+    }
+    await vscode.workspace.getConfiguration("codexPet").update(
+      "background",
+      selected.backgroundId,
+      vscode.ConfigurationTarget.Global
+    );
+    this.log(`Selected background: ${selected.label}`);
+  }
+
   public async setState(state: PetState): Promise<void> {
     if (!this.repository.loadResult) {
       await this.repository.refresh();
@@ -189,7 +215,8 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
         animation,
         scale: this.displayOptions.scale,
         animationSpeed: this.displayOptions.animationSpeed,
-        pauseWhenHidden: this.displayOptions.pauseWhenHidden
+        pauseWhenHidden: this.displayOptions.pauseWhenHidden,
+        backgroundId: this.displayOptions.background === "none" ? undefined : this.displayOptions.background
       };
       await webview.postMessage({ type: "showPet", pet } satisfies ExtensionToWebviewMessage);
     }));

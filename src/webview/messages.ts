@@ -14,6 +14,7 @@ export interface PetViewModel {
   scale: number;
   animationSpeed: number;
   pauseWhenHidden: boolean;
+  backgroundId?: string;
 }
 
 export type ExtensionToWebviewMessage =

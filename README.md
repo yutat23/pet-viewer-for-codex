@@ -1,6 +1,6 @@
 # Pet Viewer for Codex
 
-Bring your locally installed Codex pets into Visual Studio Code. The pet appears beside the integrated Terminal, scales to fit the available space, and can react to Codex activity.
+Bring your locally installed Codex pets into Visual Studio Code. The pet appears in the VS Code Panel, scales to fit the available space, and can react to Codex activity.
 
 > Pet Viewer for Codex is an unofficial third-party extension. It is not affiliated with or endorsed by OpenAI.
 
@@ -9,8 +9,9 @@ OpenAI and Codex are trademarks of OpenAI. This project does not use the OpenAI 
 ## Features
 
 - Displays pets from `CODEX_HOME/pets` or `~/.codex/pets`
-- Opens beside the integrated Terminal by default
+- Opens in its own **PET** Panel view
 - Resizes responsively with the VS Code panel
+- Includes twenty original pixel-art backgrounds with lightweight Canvas animation
 - Supports PNG, WebP, and GIF sprite sheets
 - Animates `idle`, `running`, `waiting`, `review`, and `failed` states
 - Remembers the selected pet
@@ -46,10 +47,12 @@ To install a downloaded VSIX:
 
 1. Install a pet under `~/.codex/pets/<pet-id>` or `%USERPROFILE%\.codex\pets\<pet-id>`.
 2. Open a folder or workspace in VS Code.
-3. Open the integrated Terminal. The **Pet Viewer** appears in the same panel.
-4. Right-click inside the Pet Viewer and select **Change Pet**.
+3. Open **PET** from the Panel tabs or run `View: Open View` and select **PET**.
+4. Right-click inside the PET view and select **Change Pet** or **Change Background**.
 
-You can drag the divider between the Terminal and Pet Viewer to resize the panes. VS Code remembers the layout. The outer pane width cannot be set by an extension, but the pet image size can be adjusted with `codexPet.scale`.
+To place the pet beside the Terminal, drag the **PET** view header into the Terminal panel and drop it on the right side. This is a one-time layout choice: VS Code remembers the position and pane size. Extensions cannot choose that split position or width automatically, but the pet image size can be adjusted with `codexPet.scale`.
+
+The bundled procedural Canvas backgrounds are Arcade, Autumn Forest, Blue Sky, Cozy Office, Engineering Office, Grassland, Japanese Festival, Japanese Room, Living Room, Night Camp, Night City, Outer Space, Rainy Café, Secret Treehouse, Server Room, Snowy Cabin, Sunset Overlook, Terminal, Tropical Beach, and Underwater. They are drawn entirely from code with responsive geometric shapes, coarse pixels, and lightweight animation; no background image files are bundled. Select **None** to use the VS Code theme background instead. The selected background is saved globally and used in every workspace.
 
 If `CODEX_HOME` is set, the extension uses `$CODEX_HOME/pets` instead of the default `~/.codex/pets` directory. You can also override the location with `codexPet.petDirectory`.
 
@@ -107,6 +110,7 @@ This mode observes only the App Server process managed by Pet Viewer for Codex. 
 Open the Command Palette and search for **Pet Viewer for Codex**.
 
 - `Change Pet`
+- `Change Background`
 - `Refresh Pets`
 - `Open Pets Directory`
 - `Open Pet Preview`
@@ -128,7 +132,8 @@ Open the Command Palette and search for **Pet Viewer for Codex**.
 | --- | --- | --- |
 | `codexPet.enabled` | `true` | Enables the Pet Viewer |
 | `codexPet.petDirectory` | empty | Overrides the default pets directory |
-| `codexPet.scale` | `0.75` | Pet image size multiplier from 0.25 to 3 |
+| `codexPet.scale` | `1` | Pet image size multiplier from 0.25 to 3 |
+| `codexPet.background` | `grassland` | Selects a bundled pixel-art background or `none` |
 | `codexPet.animationSpeed` | `1` | Animation speed multiplier from 0.25 to 3 |
 | `codexPet.pauseWhenHidden` | `true` | Pauses animation while the view is hidden |
 | `codexPet.watchPetDirectory` | `true` | Reloads pets after file changes |

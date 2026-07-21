@@ -1,8 +1,8 @@
 {
   "name": "pet-viewer-for-codex",
   "displayName": "Pet Viewer for Codex",
-  "description": "Display locally installed Codex pets beside the VS Code terminal.",
-  "version": "0.5.1",
+  "description": "Display locally installed Codex pets in the VS Code Panel.",
+  "version": "0.6.0",
   "publisher": "yutat23",
   "license": "SEE LICENSE IN LICENSE",
   "author": {
@@ -33,6 +33,7 @@
   "activationEvents": [
     "onView:codexPet.panelView",
     "onCommand:codexPet.selectPet",
+    "onCommand:codexPet.selectBackground",
     "onCommand:codexPet.setIdle",
     "onCommand:codexPet.setRunning",
     "onCommand:codexPet.setWaiting",
@@ -49,11 +50,20 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "codexPet.panelContainer",
+          "title": "PET",
+          "icon": "media/paw.svg"
+        }
+      ]
+    },
     "views": {
-      "terminal": [
+      "codexPet.panelContainer": [
         {
           "id": "codexPet.panelView",
-          "name": "Pet Viewer",
+          "name": "PET",
           "type": "webview",
           "icon": "media/paw.svg",
           "contextualTitle": "Pet Viewer for Codex"
@@ -66,6 +76,12 @@
         "title": "Change Pet",
         "category": "Pet Viewer for Codex",
         "icon": "$(list-selection)"
+      },
+      {
+        "command": "codexPet.selectBackground",
+        "title": "Change Background",
+        "category": "Pet Viewer for Codex",
+        "icon": "$(symbol-color)"
       },
       {
         "command": "codexPet.setIdle",
@@ -146,7 +162,12 @@
         {
           "command": "codexPet.selectPet",
           "when": "(webviewId == 'codexPet.panelView' || webviewId == 'codexPet.preview') && webviewSection == 'pet'",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "codexPet.selectBackground",
+          "when": "(webviewId == 'codexPet.panelView' || webviewId == 'codexPet.preview') && webviewSection == 'pet'",
+          "group": "navigation@2"
         }
       ],
       "view/title": [
@@ -182,10 +203,39 @@
         },
         "codexPet.scale": {
           "type": "number",
-          "default": 0.75,
+          "default": 1,
           "minimum": 0.25,
           "maximum": 3,
-          "description": "Pet image size multiplier. The image still shrinks responsively when the Terminal pane is smaller."
+          "description": "Pet image size multiplier. The image still shrinks responsively when the PET view is smaller."
+        },
+        "codexPet.background": {
+          "type": "string",
+          "enum": ["none", "arcade", "autumn-forest", "blue-sky", "office", "pro-office", "grassland", "japanese-festival", "japanese-room", "living-room", "night-camp", "night-city", "space", "rainy-cafe", "treehouse", "server-room", "snowy-cabin", "sunset", "terminal", "tropical-beach", "underwater"],
+          "enumDescriptions": [
+            "Use the VS Code theme background.",
+            "Neon arcade with colorful game cabinets.",
+            "Golden forest path with drifting autumn leaves.",
+            "Dreamy platform above the clouds.",
+            "Warm office with a desk and books.",
+            "Fully equipped modern software engineering office.",
+            "Sunny meadow and distant hills.",
+            "Japanese festival with lanterns, stalls, and fireworks.",
+            "Traditional Japanese room with tatami and shoji.",
+            "Comfortable living room with a soft rug.",
+            "Starry campsite with mountains and a campfire.",
+            "Neon skyline above a rain-wet rooftop.",
+            "Outer space with a ringed planet and platform.",
+            "Warm café interior beside a rainy window.",
+            "Secret wooden hideaway in a giant tree.",
+            "Cool server room with blinking rack lights.",
+            "Warm cabin surrounded by falling snow.",
+            "Warm sunset over mountains and a lake.",
+            "Programmer terminal with commands typed live.",
+            "Sunny tropical beach with palms and rolling waves.",
+            "Bright coral garden beneath the sea."
+          ],
+          "default": "grassland",
+          "description": "Background shown behind the Pet. You can also change it from the webview context menu."
         },
         "codexPet.animationSpeed": {
           "type": "number",
