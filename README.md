@@ -50,11 +50,13 @@ To install a downloaded VSIX:
 1. Install a pet under `~/.codex/pets/<pet-id>` or `%USERPROFILE%\.codex\pets\<pet-id>`.
 2. Open a folder or workspace in VS Code.
 3. Open **PET** from the Panel tabs or run `View: Open View` and select **PET**.
-4. Right-click inside the PET view and select **Change Pet** or **Change Background**.
+4. Right-click inside the PET view to change the pet, background, or animation speed.
 
 To place the pet beside the Terminal, drag the **PET** view header into the Terminal panel and drop it on the right side. This is a one-time layout choice: VS Code remembers the position and pane size. Extensions cannot choose that split position or width automatically, but the pet image size can be adjusted with `codexPet.scale`.
 
 The bundled procedural Canvas backgrounds are Arcade, Autumn Forest, Blue Sky, Cozy Office, Engineering Office, Grassland, Japanese Festival, Japanese Room, Living Room, Night Camp, Night City, Outer Space, Rainy Café, Secret Treehouse, Server Room, Snowy Cabin, Sunset Overlook, Terminal, Tropical Beach, and Underwater. They are drawn entirely from code with responsive geometric shapes, coarse pixels, and lightweight animation; no background image files are bundled. Select **None** to use the VS Code theme background instead. The selected background is saved globally and used in every workspace.
+
+The animation speed can be selected from 0.25x to 3x from the same context menu. The selected speed is saved globally and takes effect immediately.
 
 If `CODEX_HOME` is set, the extension uses `$CODEX_HOME/pets` instead of the default `~/.codex/pets` directory. You can also override the location with `codexPet.petDirectory`.
 
@@ -113,6 +115,7 @@ Open the Command Palette and search for **Pet Viewer for Codex**.
 
 - `Change Pet`
 - `Change Background`
+- `Change Animation Speed`
 - `Refresh Pets`
 - `Open Pets Directory`
 - `Open Pet Preview`

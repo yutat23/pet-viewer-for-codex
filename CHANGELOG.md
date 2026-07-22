@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.1
+
+- Add animation speed presets to the PET view context menu.
+- Randomize the idle blink interval between two and five seconds.
+
 ## 0.6.0
 
 - Rename the extension to Pet Viewer for Codex.

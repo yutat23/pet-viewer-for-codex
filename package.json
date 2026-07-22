@@ -2,7 +2,7 @@
   "name": "pet-viewer-for-codex",
   "displayName": "Pet Viewer for Codex",
   "description": "Display locally installed Codex pets in the VS Code Panel.",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "publisher": "yutat23",
   "license": "SEE LICENSE IN LICENSE",
   "author": {
@@ -39,6 +39,7 @@
     "onView:codexPet.panelView",
     "onCommand:codexPet.selectPet",
     "onCommand:codexPet.selectBackground",
+    "onCommand:codexPet.selectAnimationSpeed",
     "onCommand:codexPet.setIdle",
     "onCommand:codexPet.setRunning",
     "onCommand:codexPet.setWaiting",
@@ -87,6 +88,12 @@
         "title": "Change Background",
         "category": "Pet Viewer for Codex",
         "icon": "$(symbol-color)"
+      },
+      {
+        "command": "codexPet.selectAnimationSpeed",
+        "title": "Change Animation Speed",
+        "category": "Pet Viewer for Codex",
+        "icon": "$(dashboard)"
       },
       {
         "command": "codexPet.setIdle",
@@ -173,6 +180,11 @@
           "command": "codexPet.selectBackground",
           "when": "(webviewId == 'codexPet.panelView' || webviewId == 'codexPet.preview') && webviewSection == 'pet'",
           "group": "navigation@2"
+        },
+        {
+          "command": "codexPet.selectAnimationSpeed",
+          "when": "(webviewId == 'codexPet.panelView' || webviewId == 'codexPet.preview') && webviewSection == 'pet'",
+          "group": "navigation@3"
         }
       ],
       "view/title": [

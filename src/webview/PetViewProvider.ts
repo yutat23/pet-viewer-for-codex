@@ -10,6 +10,7 @@ import {
   petBackgroundsForDisplay,
   type PetBackgroundId
 } from "./backgrounds.js";
+import { ANIMATION_SPEEDS } from "./animationSpeeds.js";
 
 export class PetViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "codexPet.panelView";
@@ -154,6 +155,27 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
       vscode.ConfigurationTarget.Global
     );
     this.log(`Selected background: ${selected.label}`);
+  }
+
+  public async selectAnimationSpeed(): Promise<void> {
+    const selected = await vscode.window.showQuickPick(
+      ANIMATION_SPEEDS.map((speed) => ({
+        label: speed.label,
+        description: speed.description,
+        speed: speed.value,
+        picked: speed.value === this.displayOptions.animationSpeed
+      })),
+      { title: "Change Pet Animation Speed", placeHolder: "Choose an animation speed" }
+    );
+    if (!selected || selected.speed === this.displayOptions.animationSpeed) {
+      return;
+    }
+    await vscode.workspace.getConfiguration("codexPet").update(
+      "animationSpeed",
+      selected.speed,
+      vscode.ConfigurationTarget.Global
+    );
+    this.log(`Selected animation speed: ${selected.label}`);
   }
 
   public async setState(state: PetState): Promise<void> {

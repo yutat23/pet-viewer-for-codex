@@ -1,5 +1,8 @@
 import type * as vscode from "vscode";
 
+const IDLE_BLINK_MIN_DELAY_MS = 2000;
+const IDLE_BLINK_MAX_DELAY_MS = 5000;
+
 export function getWebviewHtml(webview: vscode.Webview): string {
   const nonce = createNonce();
   return `<!doctype html>
@@ -518,7 +521,10 @@ export function getWebviewHtml(webview: vscode.Webview): string {
           );
           const durations = pet.animation.frameDurationsMs;
           const baseDelay = Array.isArray(durations) && durations[frame] ? durations[frame] : pet.animation.frameDurationMs;
-          const delay = Math.max(16, baseDelay / Math.max(0.25, pet.animationSpeed));
+          const isIdleRestFrame = pet.state === 'idle' && pet.animation.loop && pet.animation.frameCount > 1 && frame === 0;
+          const delay = isIdleRestFrame
+            ? ${IDLE_BLINK_MIN_DELAY_MS} + Math.round(Math.random() * ${IDLE_BLINK_MAX_DELAY_MS - IDLE_BLINK_MIN_DELAY_MS})
+            : Math.max(16, baseDelay / Math.max(0.25, pet.animationSpeed));
           timer = window.setTimeout(() => {
             if (frame + 1 >= pet.animation.frameCount) {
               if (!pet.animation.loop) {

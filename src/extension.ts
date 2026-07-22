@@ -158,6 +158,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand("codexPet.selectPet", () => provider.selectPet()),
     vscode.commands.registerCommand("codexPet.selectBackground", () => provider.selectBackground()),
+    vscode.commands.registerCommand("codexPet.selectAnimationSpeed", () => provider.selectAnimationSpeed()),
     vscode.commands.registerCommand("codexPet.refreshPets", () => provider.refresh()),
     vscode.commands.registerCommand("codexPet.openPetsDirectory", async () => {
       const uri = vscode.Uri.file(petsDirectory);

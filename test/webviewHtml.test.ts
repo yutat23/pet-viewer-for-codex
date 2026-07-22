@@ -17,4 +17,10 @@ describe("Pet webview HTML", () => {
       expect(html, background.id).toContain(`backgroundId==='${background.id}'`);
     }
   });
+
+  it("holds the idle rest frame for a random two to five seconds", () => {
+    const html = getWebviewHtml({ cspSource: "test-source" } as never);
+    expect(html).toContain("pet.state === 'idle'");
+    expect(html).toContain("2000 + Math.round(Math.random() * 3000)");
+  });
 });
