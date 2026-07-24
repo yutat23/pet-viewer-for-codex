@@ -8,13 +8,14 @@ export const PET_BACKGROUND_IDS = [
 ] as const;
 
 export type PetBackgroundId = (typeof PET_BACKGROUND_IDS)[number];
+export type PetBackgroundSelection = PetBackgroundId | "custom";
 
-export function isPetBackgroundId(value: unknown): value is PetBackgroundId {
-  return PET_BACKGROUND_IDS.some((id) => id === value);
+export function isPetBackgroundSelection(value: unknown): value is PetBackgroundSelection {
+  return value === "custom" || PET_BACKGROUND_IDS.some((id) => id === value);
 }
 
 export function petBackgroundsForDisplay(strings: UiStrings): Array<{
-  id: PetBackgroundId;
+  id: PetBackgroundSelection;
   label: string;
   description: string;
 }> {
@@ -23,7 +24,9 @@ export function petBackgroundsForDisplay(strings: UiStrings): Array<{
     return { id, label, description };
   });
   const [none, ...scenes] = backgrounds;
-  return [none!, ...scenes.sort((left, right) =>
+  const [customLabel, customDescription] = strings.backgroundDescriptions.custom ?? ["Custom", "Custom"];
+  const custom = { id: "custom" as const, label: customLabel, description: customDescription };
+  return [none!, custom, ...scenes.sort((left, right) =>
     left.label.localeCompare(right.label, strings.languageTag)
   )];
 }

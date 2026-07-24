@@ -7,6 +7,7 @@ describe("webview message validation", () => {
     expect(isWebviewMessage({ type: "animationComplete", state: "review" })).toBe(true);
     expect(isWebviewMessage({ type: "setupHooks" })).toBe(true);
     expect(isWebviewMessage({ type: "showHooksHelp" })).toBe(true);
+    expect(isWebviewMessage({ type: "customBackgroundLoadFailed" })).toBe(true);
   });
 
   it("rejects unknown message types and states", () => {

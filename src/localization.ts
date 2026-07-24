@@ -19,6 +19,22 @@ export interface UiStrings {
     backgroundPlaceholder: string;
     speedTitle: string;
     speedPlaceholder: string;
+    sizeTitle: string;
+    sizePlaceholder: string;
+  };
+  size: {
+    autoLabel: string;
+    autoDescription: string;
+    fixedDescription(value: number): string;
+  };
+  customBackground: {
+    selectImageTitle: string;
+    selectImageOpenLabel: string;
+    opacityTitle: string;
+    opacityPlaceholder: string;
+    opacityDescription(value: number): string;
+    invalid(error: string): string;
+    loadFailed: string;
   };
   notifications: {
     noPets: string;
@@ -87,7 +103,23 @@ const english: UiStrings = {
     backgroundTitle: "Change Pet Background",
     backgroundPlaceholder: "Choose a background for the PET view",
     speedTitle: "Change Pet Animation Speed",
-    speedPlaceholder: "Choose an animation speed"
+    speedPlaceholder: "Choose an animation speed",
+    sizeTitle: "Change Pet Size",
+    sizePlaceholder: "Choose automatic sizing or a fixed scale"
+  },
+  size: {
+    autoLabel: "Auto",
+    autoDescription: "Fit the Pet to the available display area",
+    fixedDescription: (value) => `Display at ${Math.round(value * 100)}% unless the panel is smaller`
+  },
+  customBackground: {
+    selectImageTitle: "Select a Custom Pet Background",
+    selectImageOpenLabel: "Use as Pet Background",
+    opacityTitle: "Change Custom Background Opacity",
+    opacityPlaceholder: "Choose the custom image opacity",
+    opacityDescription: (value) => `${Math.round(value * 100)}% opaque`,
+    invalid: (error) => `The custom background could not be used: ${error}`,
+    loadFailed: "The custom background image could not be loaded."
   },
   notifications: {
     noPets: "No Codex Pets were found.",
@@ -133,6 +165,7 @@ const english: UiStrings = {
   },
   backgroundDescriptions: {
     none: ["None", "Use the VS Code theme background"],
+    custom: ["Custom Image", "Use one local PNG, WebP, or GIF image"],
     arcade: ["Arcade", "Colorful cabinets and glowing game screens"],
     "autumn-forest": ["Autumn Forest", "A golden path beneath colorful leaves"],
     "blue-sky": ["Blue Sky", "A dreamy platform above the clouds"],
@@ -189,7 +222,23 @@ const japanese: UiStrings = {
     backgroundTitle: "ペットの背景を変更",
     backgroundPlaceholder: "PET ビューの背景を選んでください",
     speedTitle: "ペットのアニメーション速度を変更",
-    speedPlaceholder: "アニメーション速度を選んでください"
+    speedPlaceholder: "アニメーション速度を選んでください",
+    sizeTitle: "ペットのサイズを変更",
+    sizePlaceholder: "自動調整または固定倍率を選んでください"
+  },
+  size: {
+    autoLabel: "自動",
+    autoDescription: "利用可能な表示領域にペットを合わせます",
+    fixedDescription: (value) => `パネルが小さい場合を除き ${Math.round(value * 100)}% で表示します`
+  },
+  customBackground: {
+    selectImageTitle: "カスタムペット背景を選択",
+    selectImageOpenLabel: "ペットの背景に使用",
+    opacityTitle: "カスタム背景の透明度を変更",
+    opacityPlaceholder: "カスタム画像の不透明度を選んでください",
+    opacityDescription: (value) => `不透明度 ${Math.round(value * 100)}%`,
+    invalid: (error) => `カスタム背景を使用できません: ${error}`,
+    loadFailed: "カスタム背景画像を読み込めませんでした。"
   },
   notifications: {
     noPets: "Codex ペットが見つかりませんでした。",
@@ -235,6 +284,7 @@ const japanese: UiStrings = {
   },
   backgroundDescriptions: {
     none: ["なし", "VS Code テーマの背景を使用します"],
+    custom: ["カスタム画像", "ローカルの PNG、WebP、GIF 画像を1枚使用します"],
     arcade: ["ゲームセンター", "色鮮やかな筐体と光るゲーム画面"],
     "autumn-forest": ["秋の森", "色づく木々の下に続く黄金色の小道"],
     "blue-sky": ["青空", "雲の上に浮かぶ夢のような足場"],
@@ -288,7 +338,11 @@ function translateJapaneseError(message: string): string {
     "Idle animation points outside the sprite layout.": "待機アニメーションがスプライトレイアウトの範囲外を指しています。",
     "Unable to infer sprite columns; add columns or frameWidth to pet.json.": "スプライトの列数を判定できません。pet.json に columns または frameWidth を追加してください。",
     "Unable to infer sprite rows; add rows or frameHeight to pet.json.": "スプライトの行数を判定できません。pet.json に rows または frameHeight を追加してください。",
-    "Unsupported or malformed sprite image. Expected PNG, WebP, or GIF.": "未対応または不正なスプライト画像です。PNG、WebP、GIF を使用してください。"
+    "Unsupported or malformed sprite image. Expected PNG, WebP, or GIF.": "未対応または不正なスプライト画像です。PNG、WebP、GIF を使用してください。",
+    "Custom background must be a PNG, WebP, or GIF file.": "カスタム背景は PNG、WebP、GIF のいずれかである必要があります。",
+    "Custom background must be a file.": "カスタム背景にはファイルを指定してください。",
+    "Custom background must be between 1 byte and 20 MB.": "カスタム背景は1バイト以上20 MB以下である必要があります。",
+    "Custom background image is invalid or malformed.": "カスタム背景画像が不正または破損しています。"
   };
   if (exact[message]) return exact[message];
   if (message.startsWith("Existing hooks.json is not valid JSON:")) {

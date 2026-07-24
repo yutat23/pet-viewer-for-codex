@@ -1,4 +1,5 @@
 import type { PetState, SpriteAnimation } from "../pet/types.js";
+import type { PetScale } from "./petSizes.js";
 
 export type HookIntegrationState = "notConfigured" | "awaitingTrust" | "active";
 
@@ -14,10 +15,12 @@ export interface PetViewModel {
   frameHeight: number;
   state: PetState;
   animation: SpriteAnimation;
-  scale: number;
+  scale: PetScale;
   animationSpeed: number;
   pauseWhenHidden: boolean;
   backgroundId?: string;
+  customBackgroundUri?: string;
+  customBackgroundOpacity: number;
 }
 
 export type ExtensionToWebviewMessage =
@@ -31,7 +34,8 @@ export type WebviewToExtensionMessage =
   | { type: "ready" }
   | { type: "animationComplete"; state: PetState }
   | { type: "setupHooks" }
-  | { type: "showHooksHelp" };
+  | { type: "showHooksHelp" }
+  | { type: "customBackgroundLoadFailed" };
 
 export function isWebviewMessage(value: unknown): value is WebviewToExtensionMessage {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -41,7 +45,11 @@ export function isWebviewMessage(value: unknown): value is WebviewToExtensionMes
   if (message.type === "ready") {
     return true;
   }
-  if (message.type === "setupHooks" || message.type === "showHooksHelp") {
+  if (
+    message.type === "setupHooks" ||
+    message.type === "showHooksHelp" ||
+    message.type === "customBackgroundLoadFailed"
+  ) {
     return true;
   }
   return message.type === "animationComplete" && isPetState(message.state);

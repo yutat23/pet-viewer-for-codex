@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getStrings } from "../src/localization.js";
 import {
-  isPetBackgroundId,
+  isPetBackgroundSelection,
   petBackgroundsForDisplay,
   PET_BACKGROUND_IDS
 } from "../src/webview/backgrounds.js";
@@ -17,10 +17,11 @@ describe("Pet backgrounds", () => {
     expect(PET_BACKGROUND_IDS[0]).toBe("none");
   });
 
-  it("displays None first and scene names alphabetically", () => {
+  it("displays None and Custom first, followed by scene names alphabetically", () => {
     const labels = petBackgroundsForDisplay(getStrings("en")).map((background) => background.label);
     expect(labels[0]).toBe("None");
-    expect(labels.slice(1)).toEqual([...labels.slice(1)].sort((left, right) => left.localeCompare(right, "en")));
+    expect(labels[1]).toBe("Custom Image");
+    expect(labels.slice(2)).toEqual([...labels.slice(2)].sort((left, right) => left.localeCompare(right, "en")));
   });
 
   it("localizes scene names", () => {
@@ -28,7 +29,8 @@ describe("Pet backgrounds", () => {
   });
 
   it("validates persisted background IDs", () => {
-    expect(isPetBackgroundId("underwater")).toBe(true);
-    expect(isPetBackgroundId("unknown-place")).toBe(false);
+    expect(isPetBackgroundSelection("underwater")).toBe(true);
+    expect(isPetBackgroundSelection("custom")).toBe(true);
+    expect(isPetBackgroundSelection("unknown-place")).toBe(false);
   });
 });

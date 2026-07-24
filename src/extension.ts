@@ -9,7 +9,12 @@ import { PetLoader } from "./pet/PetLoader.js";
 import { PetRepository } from "./pet/PetRepository.js";
 import type { PetState } from "./pet/types.js";
 import { PetViewProvider } from "./webview/PetViewProvider.js";
-import { isPetBackgroundId, type PetBackgroundId } from "./webview/backgrounds.js";
+import {
+  isPetBackgroundSelection,
+  type PetBackgroundSelection
+} from "./webview/backgrounds.js";
+import { normalizeBackgroundOpacity } from "./webview/customBackground.js";
+import { normalizePetScale, type PetScale } from "./webview/petSizes.js";
 
 const SELECTED_PET_KEY = "codexPet.selectedPet";
 
@@ -229,7 +234,14 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand("codexPet.selectPet", () => provider.selectPet()),
     vscode.commands.registerCommand("codexPet.selectBackground", () => provider.selectBackground()),
+    vscode.commands.registerCommand("codexPet.selectCustomBackground", () =>
+      provider.selectCustomBackgroundImage()
+    ),
+    vscode.commands.registerCommand("codexPet.selectBackgroundOpacity", () =>
+      provider.selectCustomBackgroundOpacity()
+    ),
     vscode.commands.registerCommand("codexPet.selectAnimationSpeed", () => provider.selectAnimationSpeed()),
+    vscode.commands.registerCommand("codexPet.selectSize", () => provider.selectSize()),
     vscode.commands.registerCommand("codexPet.refreshPets", () => provider.refresh()),
     vscode.commands.registerCommand("codexPet.openPetsDirectory", async () => {
       const uri = vscode.Uri.file(petsDirectory);
@@ -341,19 +353,27 @@ export function activate(context: vscode.ExtensionContext): void {
 
 function readDisplayOptions(): {
   enabled: boolean;
-  scale: number;
+  scale: PetScale;
   animationSpeed: number;
   pauseWhenHidden: boolean;
-  background: PetBackgroundId;
+  background: PetBackgroundSelection;
+  customBackgroundPath: string;
+  customBackgroundOpacity: number;
 } {
   const configuration = vscode.workspace.getConfiguration("codexPet");
   const configuredBackground = configuration.get<string>("background", "grassland");
   return {
     enabled: configuration.get<boolean>("enabled", true),
-    scale: configuration.get<number>("scale", 1),
+    scale: normalizePetScale(configuration.get<unknown>("scale", 1)),
     animationSpeed: configuration.get<number>("animationSpeed", 1),
     pauseWhenHidden: configuration.get<boolean>("pauseWhenHidden", true),
-    background: isPetBackgroundId(configuredBackground) ? configuredBackground : "grassland"
+    background: isPetBackgroundSelection(configuredBackground) ? configuredBackground : "grassland",
+    customBackgroundPath: configuration
+      .get<string>("customBackground.imagePath", "")
+      .trim(),
+    customBackgroundOpacity: normalizeBackgroundOpacity(
+      configuration.get<unknown>("customBackground.opacity", 1)
+    )
   };
 }
 

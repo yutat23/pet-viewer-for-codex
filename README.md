@@ -51,11 +51,11 @@ To install a downloaded VSIX:
 1. Install a pet under `~/.codex/pets/<pet-id>` or `%USERPROFILE%\.codex\pets\<pet-id>`.
 2. Open a folder or workspace in VS Code.
 3. Open **PET** from the Panel tabs or run `View: Open View` and select **PET**.
-4. Right-click inside the PET view to change the pet, background, or animation speed.
+4. Right-click inside the PET view to change the pet, background, size, or animation speed.
 
-To place the pet beside the Terminal, drag the **PET** view header into the Terminal panel and drop it on the right side. This is a one-time layout choice: VS Code remembers the position and pane size. Extensions cannot choose that split position or width automatically, but the pet image size can be adjusted with `codexPet.scale`.
+To place the pet beside the Terminal, drag the **PET** view header into the Terminal panel and drop it on the right side. This is a one-time layout choice: VS Code remembers the position and pane size. Extensions cannot choose that split position or width automatically, but the pet image size can be adjusted with `codexPet.scale`. Choose `auto` from the PET view context menu to fit the pet to the available area.
 
-The bundled procedural Canvas backgrounds are Arcade, Autumn Forest, Blue Sky, Cozy Office, Engineering Office, Grassland, Japanese Festival, Japanese Room, Living Room, Night Camp, Night City, Outer Space, Rainy Café, Secret Treehouse, Server Room, Snowy Cabin, Sunset Overlook, Terminal, Tropical Beach, and Underwater. They are drawn entirely from code with responsive geometric shapes, coarse pixels, and lightweight animation; no background image files are bundled. Select **None** to use the VS Code theme background instead. The selected background is saved globally and used in every workspace.
+The bundled procedural Canvas backgrounds are Arcade, Autumn Forest, Blue Sky, Cozy Office, Engineering Office, Grassland, Japanese Festival, Japanese Room, Living Room, Night Camp, Night City, Outer Space, Rainy Café, Secret Treehouse, Server Room, Snowy Cabin, Sunset Overlook, Terminal, Tropical Beach, and Underwater. They are drawn entirely from code with responsive geometric shapes, coarse pixels, and lightweight animation; no background image files are bundled. Select **None** to use the VS Code theme background instead, or **Custom Image** to choose one local PNG, WebP, or GIF file up to 20 MB. A custom image replaces the Canvas scene rather than layering over it. While Custom Image is selected, the context menu lets you replace the image or set its opacity to 25%, 50%, 75%, or 100%. The selected background, local image path, and opacity are saved globally and used in every workspace.
 
 The animation speed can be selected from 0.25x to 3x from the same context menu. The selected speed is saved globally and takes effect immediately.
 
@@ -143,8 +143,10 @@ Open the Command Palette and search for **Pet Viewer for Codex**.
 | --- | --- | --- |
 | `codexPet.enabled` | `true` | Enables the Pet Viewer |
 | `codexPet.petDirectory` | empty | Overrides the default pets directory |
-| `codexPet.scale` | `1` | Pet image size multiplier from 0.25 to 3 |
-| `codexPet.background` | `grassland` | Selects a bundled pixel-art background or `none` |
+| `codexPet.scale` | `1` | Pet image size multiplier from 0.25 to 3, or `auto` to fit the view |
+| `codexPet.background` | `grassland` | Selects a bundled Canvas background, `custom`, or `none` |
+| `codexPet.customBackground.imagePath` | empty | Local PNG, WebP, or GIF background image (20 MB maximum) |
+| `codexPet.customBackground.opacity` | `1` | Custom image opacity from 0 to 1 |
 | `codexPet.animationSpeed` | `1` | Animation speed multiplier from 0.25 to 3 |
 | `codexPet.pauseWhenHidden` | `true` | Pauses animation while the view is hidden |
 | `codexPet.watchPetDirectory` | `true` | Reloads pets after file changes |
@@ -201,7 +203,7 @@ Custom layouts can provide `columns`, `rows`, `frameWidth`, `frameHeight`, and `
 
 ### The pet is too large or too small
 
-Adjust `codexPet.scale`. The image will still shrink automatically when the pane is smaller than the requested scale.
+Adjust `codexPet.scale`, or right-click the pet and choose **Change Pet Size**. Select **Auto** to fit the available area. Fixed sizes still shrink when the pane is smaller than the requested scale.
 
 ## Privacy and security
 

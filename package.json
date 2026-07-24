@@ -39,7 +39,10 @@
     "onView:codexPet.panelView",
     "onCommand:codexPet.selectPet",
     "onCommand:codexPet.selectBackground",
+    "onCommand:codexPet.selectCustomBackground",
+    "onCommand:codexPet.selectBackgroundOpacity",
     "onCommand:codexPet.selectAnimationSpeed",
+    "onCommand:codexPet.selectSize",
     "onCommand:codexPet.setIdle",
     "onCommand:codexPet.setRunning",
     "onCommand:codexPet.setWaiting",
@@ -90,10 +93,28 @@
         "icon": "$(symbol-color)"
       },
       {
+        "command": "codexPet.selectCustomBackground",
+        "title": "%command.changeCustomBackground%",
+        "category": "%extension.displayName%",
+        "icon": "$(file-media)"
+      },
+      {
+        "command": "codexPet.selectBackgroundOpacity",
+        "title": "%command.changeBackgroundOpacity%",
+        "category": "%extension.displayName%",
+        "icon": "$(symbol-numeric)"
+      },
+      {
         "command": "codexPet.selectAnimationSpeed",
         "title": "%command.changeAnimationSpeed%",
         "category": "%extension.displayName%",
         "icon": "$(dashboard)"
+      },
+      {
+        "command": "codexPet.selectSize",
+        "title": "%command.changeSize%",
+        "category": "%extension.displayName%",
+        "icon": "$(screen-full)"
       },
       {
         "command": "codexPet.setIdle",
@@ -184,7 +205,22 @@
         {
           "command": "codexPet.selectAnimationSpeed",
           "when": "(webviewId == 'codexPet.panelView' || webviewId == 'codexPet.preview') && webviewSection == 'pet'",
+          "group": "navigation@5"
+        },
+        {
+          "command": "codexPet.selectSize",
+          "when": "(webviewId == 'codexPet.panelView' || webviewId == 'codexPet.preview') && webviewSection == 'pet'",
+          "group": "navigation@6"
+        },
+        {
+          "command": "codexPet.selectCustomBackground",
+          "when": "(webviewId == 'codexPet.panelView' || webviewId == 'codexPet.preview') && webviewSection == 'pet' && config.codexPet.background == custom",
           "group": "navigation@3"
+        },
+        {
+          "command": "codexPet.selectBackgroundOpacity",
+          "when": "(webviewId == 'codexPet.panelView' || webviewId == 'codexPet.preview') && webviewSection == 'pet' && config.codexPet.background == custom",
+          "group": "navigation@4"
         }
       ],
       "view/title": [
@@ -219,17 +255,27 @@
           "description": "%config.petDirectory%"
         },
         "codexPet.scale": {
-          "type": "number",
           "default": 1,
-          "minimum": 0.25,
-          "maximum": 3,
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": ["auto"],
+              "enumDescriptions": ["%size.autoDescription%"]
+            },
+            {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 3
+            }
+          ],
           "description": "%config.scale%"
         },
         "codexPet.background": {
           "type": "string",
-          "enum": ["none", "arcade", "autumn-forest", "blue-sky", "office", "pro-office", "grassland", "japanese-festival", "japanese-room", "living-room", "night-camp", "night-city", "space", "rainy-cafe", "treehouse", "server-room", "snowy-cabin", "sunset", "terminal", "tropical-beach", "underwater"],
+          "enum": ["none", "custom", "arcade", "autumn-forest", "blue-sky", "office", "pro-office", "grassland", "japanese-festival", "japanese-room", "living-room", "night-camp", "night-city", "space", "rainy-cafe", "treehouse", "server-room", "snowy-cabin", "sunset", "terminal", "tropical-beach", "underwater"],
           "enumDescriptions": [
             "%background.none%",
+            "%background.custom%",
             "%background.arcade%",
             "%background.autumnForest%",
             "%background.blueSky%",
@@ -253,6 +299,18 @@
           ],
           "default": "grassland",
           "description": "%config.background%"
+        },
+        "codexPet.customBackground.imagePath": {
+          "type": "string",
+          "default": "",
+          "description": "%config.customBackgroundImagePath%"
+        },
+        "codexPet.customBackground.opacity": {
+          "type": "number",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "%config.customBackgroundOpacity%"
         },
         "codexPet.animationSpeed": {
           "type": "number",
