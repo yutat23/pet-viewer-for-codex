@@ -14,7 +14,11 @@ describe("Pet webview HTML", () => {
     const html = getWebviewHtml({ cspSource: "test-source" } as never);
     for (const background of PET_BACKGROUNDS) {
       if (background.id === "none") continue;
-      expect(html, background.id).toContain(`backgroundId==='${background.id}'`);
+      // 各シーンは SCENES レジストリのキーとして base/anim を定義する。
+      // ハイフンを含む ID は引用符付き（'autumn-forest':）、単語 ID は素のキー（arcade:）になる。
+      const escaped = background.id.replace(/[-]/g, "\\$&");
+      const pattern = new RegExp(`['"]?${escaped}['"]?\\s*:\\s*\\{`);
+      expect(html, background.id).toMatch(pattern);
     }
   });
 });
