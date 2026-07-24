@@ -37,6 +37,8 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
     .background { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; image-rendering: pixelated; }
     .custom-background { object-fit: cover; image-rendering: auto; }
     .pet { position: absolute; left: 50%; bottom: 5%; z-index: 1; width: auto; height: auto; max-width: 92%; max-height: 90%; transform: translateX(-50%); image-rendering: pixelated; }
+    .pet[role="button"] { cursor: pointer; }
+    .pet:focus-visible { outline: 2px solid var(--vscode-focusBorder); outline-offset: -2px; }
     .stage.has-background .pet { filter: drop-shadow(0 2px 1px rgb(0 0 0 / 35%)); }
     .status { margin: 0; color: var(--vscode-descriptionForeground); font-size: 12px; line-height: 16px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .hook-status { margin: 4px; padding: 8px; border: 1px solid var(--vscode-widget-border); border-radius: 5px; background: var(--vscode-editorWidget-background); font-size: 12px; }
@@ -61,7 +63,7 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
 <body>
   <main data-vscode-context='{"webviewSection":"pet","preventDefaultContextMenuItems":true}'>
     <section id="pet-content" hidden>
-      <div id="pet-stage" class="stage"><canvas id="pet-background" class="background" aria-hidden="true" hidden></canvas><img id="pet-custom-background" class="background custom-background" aria-hidden="true" alt="" hidden><canvas id="pet" class="pet" role="img"></canvas></div>
+      <div id="pet-stage" class="stage"><canvas id="pet-background" class="background" aria-hidden="true" hidden></canvas><img id="pet-custom-background" class="background custom-background" aria-hidden="true" alt="" hidden><canvas id="pet" class="pet" role="button" tabindex="0"></canvas></div>
       <p id="pet-status" class="status"></p>
       <aside id="hook-status" class="hook-status" data-state="notConfigured" aria-live="polite">
         <strong id="hook-title"></strong>
@@ -97,6 +99,8 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
     let backgroundStartedAt = 0;
     let backgroundLastDraw = 0;
     let currentPet;
+    let interactionActive = false;
+    let interactionCooldownUntil = 0;
 
     function stateLabel(state) {
       return strings.stateLabels[state] || state;
@@ -541,13 +545,16 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
       if (backgroundFrame === undefined) backgroundFrame = window.requestAnimationFrame(renderBackground);
     }
 
-    function showPet(pet) {
+    function showPet(pet, interactionAnimation) {
       stopAnimation();
-      currentPet = pet;
+      if (!interactionAnimation) currentPet = pet;
+      const animation = interactionAnimation || pet.animation;
+      const isInteraction = Boolean(interactionAnimation);
       showOnly(petContent);
-      sprite.setAttribute('aria-label', pet.animationAriaLabel);
+      sprite.setAttribute('aria-label', isInteraction ? pet.wavingAriaLabel : pet.animationAriaLabel);
+      sprite.title = strings.waveAction;
       configureBackground(pet);
-      document.getElementById('pet-status').textContent = strings.statusPrefix + ' ' + stateLabel(pet.state);
+      document.getElementById('pet-status').textContent = strings.statusPrefix + ' ' + (isInteraction ? strings.wavingStatus : stateLabel(pet.state));
       const availableScale = Math.min(
         stage.clientWidth * 0.92 / pet.frameWidth,
         stage.clientHeight * 0.9 / pet.frameHeight
@@ -574,12 +581,12 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
         context.imageSmoothingEnabled = false;
         let frame = 0;
         const render = () => {
-          const column = pet.animation.startColumn + frame;
+          const column = animation.startColumn + frame;
           context.clearRect(0, 0, width, height);
           context.drawImage(
             sheet,
             column * pet.frameWidth,
-            pet.animation.row * pet.frameHeight,
+            animation.row * pet.frameHeight,
             pet.frameWidth,
             pet.frameHeight,
             0,
@@ -587,15 +594,20 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
             width,
             height
           );
-          const durations = pet.animation.frameDurationsMs;
-          const baseDelay = Array.isArray(durations) && durations[frame] ? durations[frame] : pet.animation.frameDurationMs;
-          const isIdleRestFrame = pet.state === 'idle' && pet.animation.loop && pet.animation.frameCount > 1 && frame === 0;
+          const durations = animation.frameDurationsMs;
+          const baseDelay = Array.isArray(durations) && durations[frame] ? durations[frame] : animation.frameDurationMs;
+          const isIdleRestFrame = !isInteraction && pet.state === 'idle' && animation.loop && animation.frameCount > 1 && frame === 0;
           const delay = isIdleRestFrame
             ? ${IDLE_BLINK_MIN_DELAY_MS} + Math.round(Math.random() * ${IDLE_BLINK_MAX_DELAY_MS - IDLE_BLINK_MIN_DELAY_MS})
             : Math.max(16, baseDelay / Math.max(0.25, pet.animationSpeed));
           timer = window.setTimeout(() => {
-            if (frame + 1 >= pet.animation.frameCount) {
-              if (!pet.animation.loop) {
+            if (frame + 1 >= animation.frameCount) {
+              if (isInteraction) {
+                interactionActive = false;
+                if (currentPet) showPet(currentPet);
+                return;
+              }
+              if (!animation.loop) {
                 vscode.postMessage({ type: 'animationComplete', state: pet.state });
                 return;
               }
@@ -619,10 +631,14 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
 
     window.addEventListener('message', ({ data }) => {
       if (!data || typeof data.type !== 'string') return;
-      if (data.type === 'showPet') showPet(data.pet);
+      if (data.type === 'showPet') {
+        currentPet = data.pet;
+        if (!interactionActive) showPet(data.pet);
+      }
       if (data.type === 'showEmpty') {
         stopAnimation();
         stopBackgroundAnimation();
+        interactionActive = false;
         currentPet = undefined;
         showOnly(emptyContent);
         document.getElementById('empty-title').textContent = data.directoryExists ? strings.noPets : strings.directoryMissing;
@@ -631,6 +647,7 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
       if (data.type === 'showDisabled') {
         stopAnimation();
         stopBackgroundAnimation();
+        interactionActive = false;
         currentPet = undefined;
         showOnly(emptyContent);
         document.getElementById('empty-title').textContent = strings.disabled;
@@ -639,6 +656,7 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
       if (data.type === 'showError') {
         stopAnimation();
         stopBackgroundAnimation();
+        interactionActive = false;
         currentPet = undefined;
         showOnly(errorContent);
         document.getElementById('error-message').textContent = data.message;
@@ -648,6 +666,21 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
     customBackground.addEventListener('error', () => {
       customBackground.hidden = true;
       vscode.postMessage({ type: 'customBackgroundLoadFailed' });
+    });
+    function wavePet() {
+      const now = Date.now();
+      if (interactionActive || now < interactionCooldownUntil || !currentPet?.wavingAnimation) return;
+      interactionActive = true;
+      interactionCooldownUntil = now + 1500;
+      showPet(currentPet, currentPet.wavingAnimation);
+    }
+    sprite.addEventListener('click', (event) => {
+      if (event.button === 0) wavePet();
+    });
+    sprite.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      wavePet();
     });
     hookAction.addEventListener('click', () => {
       vscode.postMessage({
@@ -659,10 +692,12 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
       if (document.hidden) {
         stopAnimation();
         stopBackgroundAnimation();
+        interactionActive = false;
       }
       else showPet(currentPet);
     });
     new ResizeObserver(() => {
+      if (interactionActive) return;
       if (currentPet?.scale === 'auto') {
         showPet(currentPet);
         return;

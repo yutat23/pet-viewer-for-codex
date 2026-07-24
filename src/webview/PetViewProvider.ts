@@ -429,6 +429,7 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
           selected.name,
           this.strings.stateLabels[state]
         ),
+        wavingAriaLabel: this.strings.webview.wavingAria(selected.name),
         description: selected.description,
         spriteUri: webview.asWebviewUri(fileUri).toString(),
         columns: selected.columns,
@@ -437,6 +438,7 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
         frameHeight: selected.frameHeight,
         state,
         animation,
+        wavingAnimation: selected.animations.waving,
         scale: this.displayOptions.scale,
         animationSpeed: this.displayOptions.animationSpeed,
         pauseWhenHidden: this.displayOptions.pauseWhenHidden,

@@ -58,4 +58,22 @@ describe("Pet webview HTML", () => {
     expect(html).toContain("customBackground.style.opacity");
     expect(html).toContain("type: 'customBackgroundLoadFailed'");
   });
+
+  it("plays one localized waving reaction on activation and restores the latest state", () => {
+    const english = getWebviewHtml({ cspSource: "test-source" } as never, getStrings("en"));
+    const japanese = getWebviewHtml({ cspSource: "test-source" } as never, getStrings("ja"));
+    expect(english).toContain('role="button" tabindex="0"');
+    expect(english).toContain(".pet:focus-visible { outline:");
+    expect(english).toContain("sprite.addEventListener('click', (event)");
+    expect(english).toContain("if (event.button === 0) wavePet()");
+    expect(english).toContain("event.key !== 'Enter' && event.key !== ' '");
+    expect(english).toContain("interactionCooldownUntil = now + 1500");
+    expect(english).toContain("currentPet = data.pet");
+    expect(english).toContain("if (!interactionActive) showPet(data.pet)");
+    expect(english).toContain("if (currentPet) showPet(currentPet)");
+    expect(english).toContain('"waveAction":"Wave hello"');
+    expect(english).toContain('"wavingStatus":"Waving"');
+    expect(japanese).toContain('"waveAction":"手を振ってもらう"');
+    expect(japanese).toContain('"wavingStatus":"手を振っています"');
+  });
 });

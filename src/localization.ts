@@ -70,6 +70,9 @@ export interface UiStrings {
     loadFailed: string;
     statusPrefix: string;
     animationAria(petName: string, state: string): string;
+    waveAction: string;
+    wavingStatus: string;
+    wavingAria(petName: string): string;
     canvasUnavailable: string;
     spriteLoadFailed: string;
     noPets: string;
@@ -156,6 +159,9 @@ const english: UiStrings = {
     loadFailed: "Codex Pet could not be loaded.",
     statusPrefix: "Status:",
     animationAria: (petName, state) => `${petName}, ${state} animation`,
+    waveAction: "Wave hello",
+    wavingStatus: "Waving",
+    wavingAria: (petName) => `${petName}, waving hello`,
     canvasUnavailable: "Canvas rendering is not available.",
     spriteLoadFailed: "The sprite image could not be loaded from the Pet directory.",
     noPets: "No Codex Pets were found.",
@@ -275,6 +281,9 @@ const japanese: UiStrings = {
     loadFailed: "Codex ペットを読み込めませんでした。",
     statusPrefix: "状態:",
     animationAria: (petName, state) => `${petName}、${state}のアニメーション`,
+    waveAction: "手を振ってもらう",
+    wavingStatus: "手を振っています",
+    wavingAria: (petName) => `${petName}、手を振っています`,
     canvasUnavailable: "Canvas を利用できません。",
     spriteLoadFailed: "ペットディレクトリからスプライト画像を読み込めませんでした。",
     noPets: "Codex ペットが見つかりませんでした。",

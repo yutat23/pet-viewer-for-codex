@@ -48,6 +48,7 @@ describe("PetLoader", () => {
     });
     expect(result.pets[0]?.animations.idle).toMatchObject({ row: 0, frameCount: 6, loop: true });
     expect(result.pets[0]?.animations).toMatchObject({
+      waving: { row: 3, frameCount: 6, loop: false },
       running: { row: 7, frameCount: 6 },
       waiting: { row: 6, frameCount: 6 },
       review: { row: 8, frameCount: 6 },

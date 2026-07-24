@@ -7,6 +7,7 @@ export interface PetViewModel {
   id: string;
   name: string;
   animationAriaLabel: string;
+  wavingAriaLabel: string;
   description?: string;
   spriteUri: string;
   columns: number;
@@ -15,6 +16,7 @@ export interface PetViewModel {
   frameHeight: number;
   state: PetState;
   animation: SpriteAnimation;
+  wavingAnimation?: SpriteAnimation;
   scale: PetScale;
   animationSpeed: number;
   pauseWhenHidden: boolean;

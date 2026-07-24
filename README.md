@@ -53,6 +53,8 @@ To install a downloaded VSIX:
 3. Open **PET** from the Panel tabs or run `View: Open View` and select **PET**.
 4. Right-click inside the PET view to change the pet, background, size, or animation speed.
 
+Left-click the pet (or focus it and press Enter/Space) for a short waving reaction. Repeated activation is briefly throttled, and the pet then returns to the latest state supplied by manual commands, App Server, or Hooks.
+
 To place the pet beside the Terminal, drag the **PET** view header into the Terminal panel and drop it on the right side. This is a one-time layout choice: VS Code remembers the position and pane size. Extensions cannot choose that split position or width automatically, but the pet image size can be adjusted with `codexPet.scale`. Choose `auto` from the PET view context menu to fit the pet to the available area.
 
 The bundled procedural Canvas backgrounds are Arcade, Autumn Forest, Blue Sky, Cozy Office, Engineering Office, Grassland, Japanese Festival, Japanese Room, Living Room, Night Camp, Night City, Outer Space, Rainy Café, Secret Treehouse, Server Room, Snowy Cabin, Sunset Overlook, Terminal, Tropical Beach, and Underwater. They are drawn entirely from code with responsive geometric shapes, coarse pixels, and lightweight animation; no background image files are bundled. Select **None** to use the VS Code theme background instead, or **Custom Image** to choose one local PNG, WebP, or GIF file up to 20 MB. A custom image replaces the Canvas scene rather than layering over it. While Custom Image is selected, the context menu lets you replace the image or set its opacity to 25%, 50%, 75%, or 100%. The selected background, local image path, and opacity are saved globally and used in every workspace.
@@ -182,6 +184,8 @@ Known default layouts are 8 columns by 9 rows for sprite version 1 and 8 columns
 | `waiting` | 6 |
 | `running` | 7 |
 | `review` | 8 |
+
+The standard `waving` interaction uses row 3. It is non-looping and is played when the pet is activated.
 
 Custom layouts can provide `columns`, `rows`, `frameWidth`, `frameHeight`, and `animations` in `pet.json`.
 
