@@ -15,7 +15,9 @@ describe("Pet webview HTML", () => {
     const html = getWebviewHtml({ cspSource: "test-source" } as never, getStrings("en"));
     for (const backgroundId of PET_BACKGROUND_IDS) {
       if (backgroundId === "none") continue;
-      expect(html, backgroundId).toContain(`backgroundId==='${backgroundId}'`);
+      const escaped = backgroundId.replace(/[-]/g, "\\$&");
+      const pattern = new RegExp(`['"]?${escaped}['"]?\\s*:\\s*\\{`);
+      expect(html, backgroundId).toMatch(pattern);
     }
   });
 
