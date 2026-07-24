@@ -38,6 +38,19 @@ export function removeCodexPetHooks(configuration: unknown, command: string): Js
   return root;
 }
 
+export function hasCodexPetHooks(configuration: unknown, command: string): boolean {
+  if (!isObject(configuration) || !isObject(configuration.hooks)) return false;
+  const hooks = configuration.hooks;
+  return INSTALLED_HOOK_EVENTS.every((eventName) => {
+    const groups = hooks[eventName];
+    return Array.isArray(groups) && groups.some((group) =>
+      isObject(group) && Array.isArray(group.hooks) && group.hooks.some((handler) =>
+        isObject(handler) && (handler.command === command || handler.commandWindows === command)
+      )
+    );
+  });
+}
+
 function removeCommandFromGroups(groups: unknown[], command: string): unknown[] {
   const result: unknown[] = [];
   for (const groupValue of groups) {

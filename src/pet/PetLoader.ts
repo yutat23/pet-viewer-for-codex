@@ -2,7 +2,12 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import { getPetsDirectory } from "./codexHome.js";
 import { readImageDimensions } from "./imageDimensions.js";
-import type { CodexPet, PetLoadResult, PetState, SpriteAnimation } from "./types.js";
+import type {
+  CodexPet,
+  PetAnimationName,
+  PetLoadResult,
+  SpriteAnimation
+} from "./types.js";
 
 const SUPPORTED_SPRITE_NAMES = [
   "spritesheet.webp",
@@ -10,8 +15,9 @@ const SUPPORTED_SPRITE_NAMES = [
   "spritesheet.gif"
 ] as const;
 
-const DEFAULT_ANIMATIONS: Record<PetState, SpriteAnimation> = {
+const DEFAULT_ANIMATIONS: Record<PetAnimationName, SpriteAnimation> = {
   idle: animation(0, 6, 160, [280, 110, 110, 140, 140, 320]),
+  waving: animation(3, 4, 140, [140, 140, 140, 280], false),
   failed: animation(5, 8, 140, [140, 140, 140, 140, 140, 140, 140, 240]),
   waiting: animation(6, 6, 150, [150, 150, 150, 150, 150, 260]),
   running: animation(7, 6, 120, [120, 120, 120, 120, 120, 220]),
@@ -167,12 +173,12 @@ async function resolveContainedFile(directoryPath: string, candidate: string): P
   return realCandidate;
 }
 
-function parseAnimations(value: unknown): Partial<Record<PetState, SpriteAnimation>> {
+function parseAnimations(value: unknown): Partial<Record<PetAnimationName, SpriteAnimation>> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return {};
   }
-  const result: Partial<Record<PetState, SpriteAnimation>> = {};
-  for (const state of ["idle", "running", "waiting", "review", "failed"] as const) {
+  const result: Partial<Record<PetAnimationName, SpriteAnimation>> = {};
+  for (const state of ["idle", "waving", "running", "waiting", "review", "failed"] as const) {
     const candidate = (value as Record<string, unknown>)[state];
     if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
       continue;
@@ -202,7 +208,7 @@ function parseAnimations(value: unknown): Partial<Record<PetState, SpriteAnimati
 }
 
 function applyDefaultAnimations(
-  animations: Partial<Record<PetState, SpriteAnimation>>,
+  animations: Partial<Record<PetAnimationName, SpriteAnimation>>,
   columns: number,
   rows: number
 ): void {
@@ -213,7 +219,7 @@ function applyDefaultAnimations(
       : animation(0, columns, 160);
   }
   if (isKnownCodexLayout) {
-    for (const state of ["running", "waiting", "review", "failed"] as const) {
+    for (const state of ["waving", "running", "waiting", "review", "failed"] as const) {
       animations[state] ??= cloneAnimation(DEFAULT_ANIMATIONS[state]);
     }
   }
@@ -276,9 +282,10 @@ function animation(
   row: number,
   frameCount: number,
   frameDurationMs: number,
-  frameDurationsMs?: readonly number[]
+  frameDurationsMs?: readonly number[],
+  loop = true
 ): SpriteAnimation {
-  return { row, startColumn: 0, frameCount, frameDurationMs, frameDurationsMs, loop: true };
+  return { row, startColumn: 0, frameCount, frameDurationMs, frameDurationsMs, loop };
 }
 
 function cloneAnimation(value: SpriteAnimation): SpriteAnimation {

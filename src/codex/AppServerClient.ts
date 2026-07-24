@@ -7,6 +7,7 @@ export type AppServerConnectionState = "stopped" | "starting" | "connected" | "e
 
 export interface AppServerClientOptions {
   executable: string;
+  clientTitle: string;
   cwd?: string;
   log: (message: string) => void;
   onPetState: (state: PetState) => void;
@@ -72,7 +73,7 @@ export class AppServerClient {
       params: {
         clientInfo: {
           name: "codex_pet_viewer",
-          title: "Pet Viewer for Codex",
+          title: this.options.clientTitle,
           version: "0.4.0"
         }
       }

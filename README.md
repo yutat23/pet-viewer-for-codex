@@ -21,6 +21,7 @@ OpenAI and Codex are trademarks of OpenAI. This project does not use the OpenAI 
 - Shows the active pet and state in the status bar
 - Provides manual, managed App Server, and Codex Hooks integration modes
 - Aggregates activity from multiple Codex sessions and workspace folders
+- Localizes the extension UI automatically: English for English VS Code display languages, Japanese otherwise
 
 Pets are not bundled with this extension. Install at least one compatible pet before using the viewer.
 
@@ -50,11 +51,13 @@ To install a downloaded VSIX:
 1. Install a pet under `~/.codex/pets/<pet-id>` or `%USERPROFILE%\.codex\pets\<pet-id>`.
 2. Open a folder or workspace in VS Code.
 3. Open **PET** from the Panel tabs or run `View: Open View` and select **PET**.
-4. Right-click inside the PET view to change the pet, background, or animation speed.
+4. Right-click inside the PET view to change the pet, background, size, or animation speed.
 
-To place the pet beside the Terminal, drag the **PET** view header into the Terminal panel and drop it on the right side. This is a one-time layout choice: VS Code remembers the position and pane size. Extensions cannot choose that split position or width automatically, but the pet image size can be adjusted with `codexPet.scale`.
+Left-click the pet (or focus it and press Enter/Space) for a short waving reaction. Repeated activation is briefly throttled, and the pet then returns to the latest state supplied by manual commands, App Server, or Hooks.
 
-The bundled procedural Canvas backgrounds are Arcade, Autumn Forest, Blue Sky, Cozy Office, Engineering Office, Grassland, Japanese Festival, Japanese Room, Living Room, Night Camp, Night City, Outer Space, Rainy Café, Secret Treehouse, Server Room, Snowy Cabin, Sunset Overlook, Terminal, Tropical Beach, and Underwater. They are drawn entirely from code with responsive geometric shapes, coarse pixels, and lightweight animation; no background image files are bundled. Select **None** to use the VS Code theme background instead. The selected background is saved globally and used in every workspace.
+To place the pet beside the Terminal, drag the **PET** view header into the Terminal panel and drop it on the right side. This is a one-time layout choice: VS Code remembers the position and pane size. Extensions cannot choose that split position or width automatically, but the pet image size can be adjusted with `codexPet.scale`. Choose `auto` from the PET view context menu to fit the pet to the available area.
+
+The bundled procedural Canvas backgrounds are Arcade, Autumn Forest, Blue Sky, Cozy Office, Engineering Office, Grassland, Japanese Festival, Japanese Room, Living Room, Night Camp, Night City, Outer Space, Rainy Café, Secret Treehouse, Server Room, Snowy Cabin, Sunset Overlook, Terminal, Tropical Beach, and Underwater. They are drawn entirely from code with responsive geometric shapes, coarse pixels, and lightweight animation; no background image files are bundled. Select **None** to use the VS Code theme background instead, or **Custom Image** to choose one local PNG, WebP, or GIF file up to 20 MB. A custom image replaces the Canvas scene rather than layering over it. While Custom Image is selected, the context menu lets you replace the image or set its opacity to 25%, 50%, 75%, or 100%. The selected background, local image path, and opacity are saved globally and used in every workspace.
 
 The animation speed can be selected from 0.25x to 3x from the same context menu. The selected speed is saved globally and takes effect immediately.
 
@@ -74,12 +77,17 @@ The default integration mode is `manual`. Choose an integration mode in VS Code 
 
 Hooks are the recommended mode when you want the pet to follow activity from the official Codex IDE extension.
 
-1. Run `Pet Viewer for Codex: Install Codex Hooks Integration` from the Command Palette.
-2. In Codex, run `/hooks`.
-3. Review and trust the command added by Pet Viewer for Codex.
-4. Start a new Codex session if the current session does not pick up the new Hook configuration.
+When a pet is visible and Hooks are not configured, the PET view offers an **Enable integration** action. The Command Palette action described below remains available.
+
+1. Select **Enable integration**, or run `Pet Viewer for Codex: Install Codex Hooks Integration` from the Command Palette.
+2. Review the confirmation. It lists the `hooks.json` and receiver-script paths that will be changed. Nothing is installed unless you explicitly confirm.
+3. In Codex, run `/hooks`.
+4. Review and trust the command added by Pet Viewer for Codex. The extension does not automate or bypass Codex hook trust.
+5. Start a new Codex session if the current session does not pick up the new Hook configuration.
 
 The install command preserves existing entries in `CODEX_HOME/hooks.json`, installs a small receiver script under `CODEX_HOME/codex-pet/bin`, and changes `codexPet.integrationMode` to `hooks`.
+
+After installation, the PET view shows a waiting notice until it receives its first trusted Hook event. Codex does not expose persisted Hook trust to this extension, so receiving an event is the confirmation that the integration can run.
 
 Hook events map to pet states as follows:
 
@@ -137,8 +145,10 @@ Open the Command Palette and search for **Pet Viewer for Codex**.
 | --- | --- | --- |
 | `codexPet.enabled` | `true` | Enables the Pet Viewer |
 | `codexPet.petDirectory` | empty | Overrides the default pets directory |
-| `codexPet.scale` | `1` | Pet image size multiplier from 0.25 to 3 |
-| `codexPet.background` | `grassland` | Selects a bundled pixel-art background or `none` |
+| `codexPet.scale` | `1` | Pet image size multiplier from 0.25 to 3, or `auto` to fit the view |
+| `codexPet.background` | `grassland` | Selects a bundled Canvas background, `custom`, or `none` |
+| `codexPet.customBackground.imagePath` | empty | Local PNG, WebP, or GIF background image (20 MB maximum) |
+| `codexPet.customBackground.opacity` | `1` | Custom image opacity from 0 to 1 |
 | `codexPet.animationSpeed` | `1` | Animation speed multiplier from 0.25 to 3 |
 | `codexPet.pauseWhenHidden` | `true` | Pauses animation while the view is hidden |
 | `codexPet.watchPetDirectory` | `true` | Reloads pets after file changes |
@@ -175,6 +185,8 @@ Known default layouts are 8 columns by 9 rows for sprite version 1 and 8 columns
 | `running` | 7 |
 | `review` | 8 |
 
+The standard `waving` interaction uses row 3, columns 0–3. It is non-looping and is played when the pet is activated; the remaining cells in that row are transparent.
+
 Custom layouts can provide `columns`, `rows`, `frameWidth`, `frameHeight`, and `animations` in `pet.json`.
 
 ## Troubleshooting
@@ -195,7 +207,7 @@ Custom layouts can provide `columns`, `rows`, `frameWidth`, `frameHeight`, and `
 
 ### The pet is too large or too small
 
-Adjust `codexPet.scale`. The image will still shrink automatically when the pane is smaller than the requested scale.
+Adjust `codexPet.scale`, or right-click the pet and choose **Change Pet Size**. Select **Auto** to fit the available area. Fixed sizes still shrink when the pane is smaller than the requested scale.
 
 ## Privacy and security
 

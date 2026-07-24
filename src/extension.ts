@@ -3,23 +3,30 @@ import * as vscode from "vscode";
 import { AppServerClient } from "./codex/AppServerClient.js";
 import { HookEventReceiver } from "./codex/HookEventReceiver.js";
 import { HookInstaller } from "./codex/HookInstaller.js";
+import { getStrings } from "./localization.js";
 import { getCodexHome, getPetsDirectory } from "./pet/codexHome.js";
 import { PetLoader } from "./pet/PetLoader.js";
 import { PetRepository } from "./pet/PetRepository.js";
 import type { PetState } from "./pet/types.js";
 import { PetViewProvider } from "./webview/PetViewProvider.js";
-import { isPetBackgroundId, type PetBackgroundId } from "./webview/backgrounds.js";
+import {
+  isPetBackgroundSelection,
+  type PetBackgroundSelection
+} from "./webview/backgrounds.js";
+import { normalizeBackgroundOpacity } from "./webview/customBackground.js";
+import { normalizePetScale, type PetScale } from "./webview/petSizes.js";
 
 const SELECTED_PET_KEY = "codexPet.selectedPet";
 
 export function activate(context: vscode.ExtensionContext): void {
+  const strings = getStrings(vscode.env.language);
   const codexHome = getCodexHome();
   const initialConfiguration = vscode.workspace.getConfiguration("codexPet");
   const configuredPetDirectory = initialConfiguration.get<string>("petDirectory", "").trim();
   const petsDirectory = configuredPetDirectory
     ? path.resolve(configuredPetDirectory)
     : getPetsDirectory();
-  const output = vscode.window.createOutputChannel("Pet Viewer for Codex");
+  const output = vscode.window.createOutputChannel(strings.appName);
   const log = (message: string): void => {
     output.appendLine(`[${new Date().toISOString()}] ${message}`);
   };
@@ -28,25 +35,89 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const savedPetId = context.globalState.get<string>(SELECTED_PET_KEY);
   const repository = new PetRepository(new PetLoader(petsDirectory), savedPetId);
-  const provider = new PetViewProvider(
-    context.extensionUri,
-    petsDirectory,
-    repository,
-    log
-  );
-  provider.setDisplayOptions(readDisplayOptions());
-  const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 20);
-  status.name = "Pet Viewer for Codex";
-  status.text = "$(loading~spin) Pet Viewer";
-  status.tooltip = "Pet Viewer for Codex is loading";
-  status.command = "codexPet.focusPet";
-  status.show();
-  let appServerClient: AppServerClient | undefined;
-  let hookEventReceiver: HookEventReceiver | undefined;
   const hookInstaller = new HookInstaller(
     codexHome,
     context.asAbsolutePath(path.join("scripts", "codex-pet-hook.cjs"))
   );
+  let hookEventObserved = false;
+  let provider: PetViewProvider;
+  const showHooksHelp = async (): Promise<void> => {
+    const choice = await vscode.window.showInformationMessage(
+      strings.hooks.helpMessage,
+      strings.hooks.openConfiguration
+    );
+    if (choice === strings.hooks.openConfiguration) {
+      await vscode.window.showTextDocument(vscode.Uri.file(hookInstaller.hooksPath));
+    }
+  };
+  const setupHooks = async (): Promise<void> => {
+    const choice = await vscode.window.showWarningMessage(
+      strings.hooks.confirmTitle,
+      { modal: true, detail: strings.hooks.confirmMessage(hookInstaller.hooksPath, hookInstaller.scriptPath) },
+      strings.hooks.enable
+    );
+    if (choice !== strings.hooks.enable) return;
+    try {
+      hookEventObserved = false;
+      const result = await hookInstaller.install();
+      log(`Installed Pet Viewer for Codex hooks in ${result.hooksPath}`);
+      await vscode.workspace.getConfiguration("codexPet").update(
+        "integrationMode",
+        "hooks",
+        vscode.ConfigurationTarget.Global
+      );
+      await provider.setHookIntegrationState("awaitingTrust");
+      const next = await vscode.window.showInformationMessage(
+        strings.hooks.installedMessage,
+        strings.hooks.openConfiguration
+      );
+      if (next === strings.hooks.openConfiguration) {
+        await vscode.window.showTextDocument(vscode.Uri.file(result.hooksPath));
+      }
+    } catch (error) {
+      log(`Could not install Pet Viewer for Codex hooks: ${String(error)}`);
+      void vscode.window.showErrorMessage(
+        strings.notifications.hooksInstallFailed(
+          strings.translateError(error instanceof Error ? error.message : String(error))
+        )
+      );
+    }
+  };
+  provider = new PetViewProvider(
+    context.extensionUri,
+    petsDirectory,
+    repository,
+    log,
+    strings,
+    { setupHooks, showHooksHelp }
+  );
+  provider.setDisplayOptions(readDisplayOptions());
+  const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 20);
+  status.name = strings.appName;
+  status.text = `$(loading~spin) ${strings.appName}`;
+  status.tooltip = strings.statusLoading;
+  status.command = "codexPet.focusPet";
+  status.show();
+  let appServerClient: AppServerClient | undefined;
+  let hookEventReceiver: HookEventReceiver | undefined;
+  const refreshHookIntegrationStatus = async (): Promise<void> => {
+    try {
+      const installed = await hookInstaller.isInstalled();
+      const hooksMode = vscode.workspace.getConfiguration("codexPet").get<string>(
+        "integrationMode",
+        "manual"
+      ) === "hooks";
+      await provider.setHookIntegrationState(
+        installed && hooksMode
+          ? hookEventObserved ? "active" : "awaitingTrust"
+          : "notConfigured"
+      );
+    } catch (error) {
+      log(`Could not inspect Pet Viewer for Codex hooks: ${String(error)}`);
+      await provider.setHookIntegrationState("notConfigured");
+    }
+  };
+  void refreshHookIntegrationStatus();
 
   const startAppServer = (): void => {
     if (appServerClient) {
@@ -58,16 +129,17 @@ export function activate(context: vscode.ExtensionContext): void {
     const cwd = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     appServerClient = new AppServerClient({
       executable,
+      clientTitle: strings.appName,
       cwd,
       log,
       onPetState: (state) => void provider.setState(state),
       onConnectionState: (state) => {
         log(`App Server connection state: ${state}`);
         if (state === "connected") {
-          void vscode.window.setStatusBarMessage("Pet Viewer for Codex: App Server connected", 3000);
+          void vscode.window.setStatusBarMessage(strings.notifications.appServerConnected, 3000);
         } else if (state === "error") {
           void vscode.window.showWarningMessage(
-            "Pet Viewer for Codex could not connect to the managed App Server. See its output channel."
+            strings.notifications.appServerConnectionFailed
           );
         }
       }
@@ -93,7 +165,11 @@ export function activate(context: vscode.ExtensionContext): void {
       eventDirectory: path.join(codexHome, "codex-pet", "events"),
       workspaceRoots,
       log,
-      onPetState: (state) => void provider.setState(state)
+      onPetState: (state) => void provider.setState(state),
+      onEventReceived: () => {
+        hookEventObserved = true;
+        void provider.setHookIntegrationState("active");
+      }
     });
     try {
       await hookEventReceiver.start();
@@ -102,7 +178,7 @@ export function activate(context: vscode.ExtensionContext): void {
       hookEventReceiver = undefined;
       log(`Could not start Codex Hooks receiver: ${String(error)}`);
       void vscode.window.showWarningMessage(
-        "Pet Viewer for Codex could not start the Hooks receiver. See its output channel."
+        strings.notifications.hooksReceiverFailed
       );
     }
   };
@@ -158,7 +234,14 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     vscode.commands.registerCommand("codexPet.selectPet", () => provider.selectPet()),
     vscode.commands.registerCommand("codexPet.selectBackground", () => provider.selectBackground()),
+    vscode.commands.registerCommand("codexPet.selectCustomBackground", () =>
+      provider.selectCustomBackgroundImage()
+    ),
+    vscode.commands.registerCommand("codexPet.selectBackgroundOpacity", () =>
+      provider.selectCustomBackgroundOpacity()
+    ),
     vscode.commands.registerCommand("codexPet.selectAnimationSpeed", () => provider.selectAnimationSpeed()),
+    vscode.commands.registerCommand("codexPet.selectSize", () => provider.selectSize()),
     vscode.commands.registerCommand("codexPet.refreshPets", () => provider.refresh()),
     vscode.commands.registerCommand("codexPet.openPetsDirectory", async () => {
       const uri = vscode.Uri.file(petsDirectory);
@@ -171,39 +254,27 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("codexPet.stopAppServer", stopAppServer),
     vscode.commands.registerCommand("codexPet.restartAppServer", restartAppServer),
     vscode.commands.registerCommand("codexPet.installHooks", async () => {
-      try {
-        const result = await hookInstaller.install();
-        log(`Installed Pet Viewer for Codex hooks in ${result.hooksPath}`);
-        await vscode.workspace.getConfiguration("codexPet").update(
-          "integrationMode",
-          "hooks",
-          vscode.ConfigurationTarget.Global
-        );
-        const choice = await vscode.window.showInformationMessage(
-          "Pet Viewer for Codex Hooks installed. In Codex, run /hooks and trust the new command before using them.",
-          "Open hooks.json"
-        );
-        if (choice === "Open hooks.json") {
-          await vscode.window.showTextDocument(vscode.Uri.file(result.hooksPath));
-        }
-      } catch (error) {
-        log(`Could not install Pet Viewer for Codex hooks: ${String(error)}`);
-        void vscode.window.showErrorMessage(`Pet Viewer for Codex Hooks installation failed: ${String(error)}`);
-      }
+      await setupHooks();
     }),
     vscode.commands.registerCommand("codexPet.uninstallHooks", async () => {
       try {
         const result = await hookInstaller.uninstall();
         log(`Removed Pet Viewer for Codex hooks from ${result.hooksPath}`);
         stopHookReceiver();
+        hookEventObserved = false;
         const configuration = vscode.workspace.getConfiguration("codexPet");
         if (configuration.get<string>("integrationMode") === "hooks") {
           await configuration.update("integrationMode", "manual", vscode.ConfigurationTarget.Global);
         }
-        void vscode.window.showInformationMessage("Pet Viewer for Codex Hooks removed.");
+        await provider.setHookIntegrationState("notConfigured");
+        void vscode.window.showInformationMessage(strings.notifications.hooksRemoved);
       } catch (error) {
         log(`Could not remove Pet Viewer for Codex hooks: ${String(error)}`);
-        void vscode.window.showErrorMessage(`Pet Viewer for Codex Hooks removal failed: ${String(error)}`);
+        void vscode.window.showErrorMessage(
+          strings.notifications.hooksRemoveFailed(
+            strings.translateError(error instanceof Error ? error.message : String(error))
+          )
+        );
       }
     }),
     vscode.commands.registerCommand("codexPet.openHooksConfiguration", async () => {
@@ -220,14 +291,14 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
     provider.onDidChangePet((pet) => {
       if (!pet) {
-        status.text = "$(warning) Pet Viewer";
-        status.tooltip = "No Codex Pet is currently available";
+        status.text = `$(warning) ${strings.appName}`;
+        status.tooltip = strings.statusNoPet;
         return;
       }
       const icon = statusIcon(pet.state);
-      const stateLabel = capitalize(pet.state);
+      const stateLabel = strings.stateLabels[pet.state];
       status.text = `${icon} ${pet.petName}: ${stateLabel}`;
-      status.tooltip = `Show ${pet.petName} in the PET view (${stateLabel})`;
+      status.tooltip = strings.statusShowPet(pet.petName, stateLabel);
     }),
     watcher.onDidCreate((uri) => watchEnabled() && scheduleRefresh("created", uri)),
     watcher.onDidChange((uri) => watchEnabled() && scheduleRefresh("changed", uri)),
@@ -239,10 +310,10 @@ export function activate(context: vscode.ExtensionContext): void {
       provider.setDisplayOptions(readDisplayOptions());
       if (event.affectsConfiguration("codexPet.petDirectory")) {
         void vscode.window.showInformationMessage(
-          "Reload the VS Code window to apply the new Codex Pet directory.",
-          "Reload"
+          strings.notifications.reloadRequired,
+          strings.notifications.reload
         ).then((choice) => {
-          if (choice === "Reload") {
+          if (choice === strings.notifications.reload) {
             void vscode.commands.executeCommand("workbench.action.reloadWindow");
           }
         });
@@ -252,6 +323,7 @@ export function activate(context: vscode.ExtensionContext): void {
         event.affectsConfiguration("codexPet.appServer.autoStart")
       ) {
         reconcileIntegration();
+        void refreshHookIntegrationStatus();
       }
       if (event.affectsConfiguration("codexPet.appServer.executable")) {
         appServerClient?.dispose();
@@ -281,19 +353,27 @@ export function activate(context: vscode.ExtensionContext): void {
 
 function readDisplayOptions(): {
   enabled: boolean;
-  scale: number;
+  scale: PetScale;
   animationSpeed: number;
   pauseWhenHidden: boolean;
-  background: PetBackgroundId;
+  background: PetBackgroundSelection;
+  customBackgroundPath: string;
+  customBackgroundOpacity: number;
 } {
   const configuration = vscode.workspace.getConfiguration("codexPet");
   const configuredBackground = configuration.get<string>("background", "grassland");
   return {
     enabled: configuration.get<boolean>("enabled", true),
-    scale: configuration.get<number>("scale", 1),
+    scale: normalizePetScale(configuration.get<unknown>("scale", 1)),
     animationSpeed: configuration.get<number>("animationSpeed", 1),
     pauseWhenHidden: configuration.get<boolean>("pauseWhenHidden", true),
-    background: isPetBackgroundId(configuredBackground) ? configuredBackground : "grassland"
+    background: isPetBackgroundSelection(configuredBackground) ? configuredBackground : "grassland",
+    customBackgroundPath: configuration
+      .get<string>("customBackground.imagePath", "")
+      .trim(),
+    customBackgroundOpacity: normalizeBackgroundOpacity(
+      configuration.get<unknown>("customBackground.opacity", 1)
+    )
   };
 }
 
@@ -314,10 +394,6 @@ function statusIcon(state: PetState): string {
     default:
       return "$(circle-filled)";
   }
-}
-
-function capitalize(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 export function deactivate(): void {}

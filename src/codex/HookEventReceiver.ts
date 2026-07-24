@@ -13,6 +13,7 @@ export interface HookEventReceiverOptions {
   workspaceRoots: readonly string[];
   log(message: string): void;
   onPetState(state: PetState): void;
+  onEventReceived?(): void;
 }
 
 export class HookEventReceiver implements vscode.Disposable {
@@ -77,6 +78,7 @@ export class HookEventReceiver implements vscode.Disposable {
     if (!isWithinWorkspace(event.cwd, this.options.workspaceRoots)) return;
 
     const transition = this.tracker.handle(event);
+    this.options.onEventReceived?.();
     this.options.log(
       `Hook ${event.eventName} (${event.sessionId}) -> ${transition.state} [${event.cwd}]`
     );

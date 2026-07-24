@@ -12,7 +12,11 @@ function assertPositiveDimensions(width: number, height: number, format: ImageDi
 }
 
 export function readImageDimensions(buffer: Buffer): ImageDimensions {
-  if (buffer.length >= 24 && buffer.subarray(1, 4).toString("ascii") === "PNG") {
+  if (
+    buffer.length >= 24 &&
+    buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) &&
+    buffer.subarray(12, 16).toString("ascii") === "IHDR"
+  ) {
     return assertPositiveDimensions(buffer.readUInt32BE(16), buffer.readUInt32BE(20), "png");
   }
 

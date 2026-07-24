@@ -1,4 +1,5 @@
 export type PetState = "idle" | "running" | "waiting" | "review" | "failed";
+export type PetAnimationName = PetState | "waving";
 
 export interface SpriteAnimation {
   row: number;
@@ -20,7 +21,7 @@ export interface CodexPet {
   rows: number;
   frameWidth: number;
   frameHeight: number;
-  animations: Partial<Record<PetState, SpriteAnimation>>;
+  animations: Partial<Record<PetAnimationName, SpriteAnimation>>;
 }
 
 export interface PetLoadIssue {

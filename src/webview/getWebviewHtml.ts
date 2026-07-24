@@ -1,12 +1,28 @@
 import type * as vscode from "vscode";
+import type { UiStrings } from "../localization.js";
 
 const IDLE_BLINK_MIN_DELAY_MS = 2000;
 const IDLE_BLINK_MAX_DELAY_MS = 5000;
 
-export function getWebviewHtml(webview: vscode.Webview): string {
+export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): string {
   const nonce = createNonce();
+  const localized = escapeForInlineScript(JSON.stringify({
+    ...strings.webview,
+    animationAria: undefined,
+    stateLabels: strings.stateLabels,
+    hooks: {
+      notConfiguredTitle: strings.hooks.notConfiguredTitle,
+      notConfiguredBody: strings.hooks.notConfiguredBody,
+      awaitingTrustTitle: strings.hooks.awaitingTrustTitle,
+      awaitingTrustBody: strings.hooks.awaitingTrustBody,
+      activeTitle: strings.hooks.activeTitle,
+      activeBody: strings.hooks.activeBody,
+      enable: strings.hooks.enable,
+      showHelp: strings.hooks.showHelp
+    }
+  }));
   return `<!doctype html>
-<html lang="en">
+<html lang="${strings.languageTag}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,43 +32,66 @@ export function getWebviewHtml(webview: vscode.Webview): string {
     html, body { width: 100%; height: 100%; }
     body { box-sizing: border-box; margin: 0; padding: 2px; overflow: hidden; color: var(--vscode-foreground); font-family: var(--vscode-font-family); }
     main { width: 100%; height: 100%; min-width: 0; min-height: 0; }
-    #pet-content { box-sizing: border-box; width: 100%; height: 100%; min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 0; }
+    #pet-content { box-sizing: border-box; width: 100%; height: 100%; min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto auto; gap: 0; }
     .stage { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; display: grid; place-items: center; overflow: hidden; border-radius: 4px; background: color-mix(in srgb, var(--vscode-editor-background) 88%, var(--vscode-foreground)); }
     .background { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; image-rendering: pixelated; }
-    .pet { position: relative; z-index: 1; width: auto; height: auto; max-width: 100%; max-height: 100%; image-rendering: pixelated; }
-    .stage.has-background .pet { position: absolute; left: 50%; bottom: 5%; max-width: 92%; max-height: 90%; transform: translateX(-50%); filter: drop-shadow(0 2px 1px rgb(0 0 0 / 35%)); }
+    .custom-background { object-fit: cover; image-rendering: auto; }
+    .pet { position: absolute; left: 50%; bottom: 5%; z-index: 1; width: auto; height: auto; max-width: 92%; max-height: 90%; transform: translateX(-50%); image-rendering: pixelated; }
+    .pet[role="button"] { cursor: pointer; }
+    .pet:focus-visible { outline: 2px solid var(--vscode-focusBorder); outline-offset: -2px; }
+    .stage.has-background .pet { filter: drop-shadow(0 2px 1px rgb(0 0 0 / 35%)); }
     .status { margin: 0; color: var(--vscode-descriptionForeground); font-size: 12px; line-height: 16px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hook-status { margin: 4px; padding: 8px; border: 1px solid var(--vscode-widget-border); border-radius: 5px; background: var(--vscode-editorWidget-background); font-size: 12px; }
+    .hook-status strong, .hook-status span { display: block; }
+    .hook-status span { margin-top: 3px; color: var(--vscode-descriptionForeground); }
+    .hook-status button { margin-top: 7px; border: 0; padding: 4px 8px; color: var(--vscode-button-foreground); background: var(--vscode-button-background); cursor: pointer; }
+    .hook-status button:hover { background: var(--vscode-button-hoverBackground); }
+    .hook-status[data-state="active"] { display: none; }
     .empty { min-height: 180px; display: grid; place-content: center; gap: 8px; text-align: center; }
     code { word-break: break-all; font-family: var(--vscode-editor-font-family); }
     [hidden] { display: none !important; }
     @media (max-height: 34px) {
       body { padding: 1px; }
-      #pet-content { grid-template-rows: minmax(0, 1fr); }
+      #pet-content { grid-template-rows: minmax(0, 1fr) auto; }
       .status { display: none; }
+      .hook-status { font-size: 10px; padding: 2px 4px; margin: 1px; }
+      .hook-status span { display: none; }
+      .hook-status button { margin-top: 2px; padding: 2px 4px; }
     }
   </style>
 </head>
 <body>
   <main data-vscode-context='{"webviewSection":"pet","preventDefaultContextMenuItems":true}'>
     <section id="pet-content" hidden>
-      <div id="pet-stage" class="stage"><canvas id="pet-background" class="background" aria-hidden="true" hidden></canvas><canvas id="pet" class="pet" role="img"></canvas></div>
+      <div id="pet-stage" class="stage"><canvas id="pet-background" class="background" aria-hidden="true" hidden></canvas><img id="pet-custom-background" class="background custom-background" aria-hidden="true" alt="" hidden><canvas id="pet" class="pet" role="button" tabindex="0"></canvas></div>
       <p id="pet-status" class="status"></p>
+      <aside id="hook-status" class="hook-status" data-state="notConfigured" aria-live="polite">
+        <strong id="hook-title"></strong>
+        <span id="hook-body"></span>
+        <button id="hook-action" type="button"></button>
+      </aside>
     </section>
     <section id="empty-content" class="empty" hidden>
       <strong id="empty-title"></strong>
-      <span>Expected:</span>
+      <span>${escapeHtml(strings.webview.expected)}</span>
       <code id="pets-directory"></code>
     </section>
-    <section id="error-content" class="empty" hidden><strong>Codex Pet could not be loaded.</strong><span id="error-message"></span></section>
+    <section id="error-content" class="empty" hidden><strong>${escapeHtml(strings.webview.loadFailed)}</strong><span id="error-message"></span></section>
   </main>
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
+    const strings = ${localized};
     const petContent = document.getElementById('pet-content');
     const emptyContent = document.getElementById('empty-content');
     const errorContent = document.getElementById('error-content');
     const stage = document.getElementById('pet-stage');
     const background = document.getElementById('pet-background');
+    const customBackground = document.getElementById('pet-custom-background');
     const sprite = document.getElementById('pet');
+    const hookStatus = document.getElementById('hook-status');
+    const hookTitle = document.getElementById('hook-title');
+    const hookBody = document.getElementById('hook-body');
+    const hookAction = document.getElementById('hook-action');
     const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     let timer;
     let imageGeneration = 0;
@@ -61,6 +100,24 @@ export function getWebviewHtml(webview: vscode.Webview): string {
     let backgroundStartedAt = 0;
     let backgroundLastDraw = 0;
     let currentPet;
+    let interactionActive = false;
+    let interactionCooldownUntil = 0;
+    let loadedSpriteSheet;
+    let loadedSpriteUri;
+
+    function stateLabel(state) {
+      return strings.stateLabels[state] || state;
+    }
+
+    function setHookIntegration(state) {
+      hookStatus.dataset.state = state;
+      const pending = state === 'awaitingTrust';
+      const active = state === 'active';
+      hookTitle.textContent = active ? strings.hooks.activeTitle : pending ? strings.hooks.awaitingTrustTitle : strings.hooks.notConfiguredTitle;
+      hookBody.textContent = active ? strings.hooks.activeBody : pending ? strings.hooks.awaitingTrustBody : strings.hooks.notConfiguredBody;
+      hookAction.textContent = pending ? strings.hooks.showHelp : strings.hooks.enable;
+      hookAction.hidden = active;
+    }
 
     function showOnly(element) {
       petContent.hidden = element !== petContent;
@@ -759,10 +816,20 @@ export function getWebviewHtml(webview: vscode.Webview): string {
     }
 
     function configureBackground(pet) {
-      const hasBackground = typeof pet.backgroundId === 'string' && pet.backgroundId.length > 0;
-      background.hidden = !hasBackground;
-      stage.classList.toggle('has-background', hasBackground);
-      if (!hasBackground) {
+      const hasCustomBackground = typeof pet.customBackgroundUri === 'string' && pet.customBackgroundUri.length > 0;
+      const hasCanvasBackground = !hasCustomBackground && typeof pet.backgroundId === 'string' && pet.backgroundId.length > 0;
+      background.hidden = !hasCanvasBackground;
+      customBackground.hidden = !hasCustomBackground;
+      stage.classList.toggle('has-background', hasCanvasBackground || hasCustomBackground);
+      if (hasCustomBackground) {
+        backgroundId = undefined;
+        stopBackgroundAnimation();
+        customBackground.style.opacity = String(Math.max(0, Math.min(1, Number(pet.customBackgroundOpacity) || 0)));
+        if (customBackground.src !== pet.customBackgroundUri) customBackground.src = pet.customBackgroundUri;
+        return;
+      }
+      customBackground.removeAttribute('src');
+      if (!hasCanvasBackground) {
         backgroundId = undefined;
         stopBackgroundAnimation();
         return;
@@ -773,38 +840,46 @@ export function getWebviewHtml(webview: vscode.Webview): string {
       if (backgroundFrame === undefined) backgroundFrame = window.requestAnimationFrame(renderBackground);
     }
 
-    function showPet(pet) {
+    function showPet(pet, interactionAnimation) {
       stopAnimation();
-      currentPet = pet;
+      if (!interactionAnimation) currentPet = pet;
+      const animation = interactionAnimation || pet.animation;
+      const isInteraction = Boolean(interactionAnimation);
       showOnly(petContent);
-      sprite.setAttribute('aria-label', pet.name + ', ' + pet.state + ' animation');
+      sprite.setAttribute('aria-label', isInteraction ? pet.wavingAriaLabel : pet.animationAriaLabel);
+      sprite.title = strings.waveAction;
       configureBackground(pet);
-      document.getElementById('pet-status').textContent = 'Status: ' + pet.state.charAt(0).toUpperCase() + pet.state.slice(1);
-      const scale = Math.max(0.25, Math.min(3, pet.scale));
-      const width = Math.max(1, Math.round(pet.frameWidth * scale));
-      const height = Math.max(1, Math.round(pet.frameHeight * scale));
-      sprite.width = width;
-      sprite.height = height;
-
+      document.getElementById('pet-status').textContent = strings.statusPrefix + ' ' + (isInteraction ? strings.wavingStatus : stateLabel(pet.state));
+      const availableScale = Math.min(
+        stage.clientWidth * 0.92 / pet.frameWidth,
+        stage.clientHeight * 0.9 / pet.frameHeight
+      );
+      const requestedScale = pet.scale === 'auto'
+        ? Number.POSITIVE_INFINITY
+        : Math.max(0.25, Math.min(3, Number(pet.scale) || 1));
+      const displayScale = Math.max(0.01, Math.min(requestedScale, availableScale));
+      const width = Math.max(1, Math.round(pet.frameWidth * displayScale));
+      const height = Math.max(1, Math.round(pet.frameHeight * displayScale));
       const generation = ++imageGeneration;
-      const sheet = new Image();
-      sheet.addEventListener('load', () => {
+      const startRendering = (sheet) => {
         if (generation !== imageGeneration) return;
+        if (sprite.width !== width) sprite.width = width;
+        if (sprite.height !== height) sprite.height = height;
         const context = sprite.getContext('2d');
         if (!context) {
           showOnly(errorContent);
-          document.getElementById('error-message').textContent = 'Canvas rendering is not available.';
+          document.getElementById('error-message').textContent = strings.canvasUnavailable;
           return;
         }
         context.imageSmoothingEnabled = false;
         let frame = 0;
         const render = () => {
-          const column = pet.animation.startColumn + frame;
+          const column = animation.startColumn + frame;
           context.clearRect(0, 0, width, height);
           context.drawImage(
             sheet,
             column * pet.frameWidth,
-            pet.animation.row * pet.frameHeight,
+            animation.row * pet.frameHeight,
             pet.frameWidth,
             pet.frameHeight,
             0,
@@ -812,15 +887,20 @@ export function getWebviewHtml(webview: vscode.Webview): string {
             width,
             height
           );
-          const durations = pet.animation.frameDurationsMs;
-          const baseDelay = Array.isArray(durations) && durations[frame] ? durations[frame] : pet.animation.frameDurationMs;
-          const isIdleRestFrame = pet.state === 'idle' && pet.animation.loop && pet.animation.frameCount > 1 && frame === 0;
+          const durations = animation.frameDurationsMs;
+          const baseDelay = Array.isArray(durations) && durations[frame] ? durations[frame] : animation.frameDurationMs;
+          const isIdleRestFrame = !isInteraction && pet.state === 'idle' && animation.loop && animation.frameCount > 1 && frame === 0;
           const delay = isIdleRestFrame
             ? ${IDLE_BLINK_MIN_DELAY_MS} + Math.round(Math.random() * ${IDLE_BLINK_MAX_DELAY_MS - IDLE_BLINK_MIN_DELAY_MS})
             : Math.max(16, baseDelay / Math.max(0.25, pet.animationSpeed));
           timer = window.setTimeout(() => {
-            if (frame + 1 >= pet.animation.frameCount) {
-              if (!pet.animation.loop) {
+            if (frame + 1 >= animation.frameCount) {
+              if (isInteraction) {
+                interactionActive = false;
+                if (currentPet) showPet(currentPet);
+                return;
+              }
+              if (!animation.loop) {
                 vscode.postMessage({ type: 'animationComplete', state: pet.state });
                 return;
               }
@@ -832,52 +912,100 @@ export function getWebviewHtml(webview: vscode.Webview): string {
           }, delay);
         };
         render();
+      };
+      if (loadedSpriteSheet && loadedSpriteUri === pet.spriteUri) {
+        startRendering(loadedSpriteSheet);
+        return;
+      }
+      const sheet = new Image();
+      sheet.addEventListener('load', () => {
+        if (generation !== imageGeneration) return;
+        loadedSpriteSheet = sheet;
+        loadedSpriteUri = pet.spriteUri;
+        startRendering(sheet);
       });
       sheet.addEventListener('error', () => {
         if (generation !== imageGeneration) return;
         stopAnimation();
         showOnly(errorContent);
-        document.getElementById('error-message').textContent = 'The sprite image could not be loaded from the Pet directory.';
+        document.getElementById('error-message').textContent = strings.spriteLoadFailed;
       });
       sheet.src = pet.spriteUri;
     }
 
     window.addEventListener('message', ({ data }) => {
       if (!data || typeof data.type !== 'string') return;
-      if (data.type === 'showPet') showPet(data.pet);
+      if (data.type === 'showPet') {
+        currentPet = data.pet;
+        if (!interactionActive) showPet(data.pet);
+      }
       if (data.type === 'showEmpty') {
         stopAnimation();
         stopBackgroundAnimation();
+        interactionActive = false;
         currentPet = undefined;
         showOnly(emptyContent);
-        document.getElementById('empty-title').textContent = data.directoryExists ? 'No Codex Pets were found.' : 'Codex Pet directory was not found.';
+        document.getElementById('empty-title').textContent = data.directoryExists ? strings.noPets : strings.directoryMissing;
         document.getElementById('pets-directory').textContent = data.petsDirectory;
       }
       if (data.type === 'showDisabled') {
         stopAnimation();
         stopBackgroundAnimation();
+        interactionActive = false;
         currentPet = undefined;
         showOnly(emptyContent);
-        document.getElementById('empty-title').textContent = 'Codex Pet is disabled.';
-        document.getElementById('pets-directory').textContent = 'Enable codexPet.enabled in Settings.';
+        document.getElementById('empty-title').textContent = strings.disabled;
+        document.getElementById('pets-directory').textContent = strings.enableSetting;
       }
       if (data.type === 'showError') {
         stopAnimation();
         stopBackgroundAnimation();
+        interactionActive = false;
         currentPet = undefined;
         showOnly(errorContent);
         document.getElementById('error-message').textContent = data.message;
       }
+      if (data.type === 'setHookIntegration') setHookIntegration(data.state);
+    });
+    customBackground.addEventListener('error', () => {
+      customBackground.hidden = true;
+      vscode.postMessage({ type: 'customBackgroundLoadFailed' });
+    });
+    function wavePet() {
+      const now = Date.now();
+      if (interactionActive || now < interactionCooldownUntil || !currentPet?.wavingAnimation) return;
+      interactionActive = true;
+      interactionCooldownUntil = now + 1500;
+      showPet(currentPet, currentPet.wavingAnimation);
+    }
+    sprite.addEventListener('click', (event) => {
+      if (event.button === 0) wavePet();
+    });
+    sprite.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      wavePet();
+    });
+    hookAction.addEventListener('click', () => {
+      vscode.postMessage({
+        type: hookStatus.dataset.state === 'awaitingTrust' ? 'showHooksHelp' : 'setupHooks'
+      });
     });
     document.addEventListener('visibilitychange', () => {
       if (!currentPet || !currentPet.pauseWhenHidden) return;
       if (document.hidden) {
         stopAnimation();
         stopBackgroundAnimation();
+        interactionActive = false;
       }
       else showPet(currentPet);
     });
     new ResizeObserver(() => {
+      if (interactionActive) return;
+      if (currentPet?.scale === 'auto') {
+        showPet(currentPet);
+        return;
+      }
       if (!backgroundId || background.hidden) return;
       backgroundLastDraw = 0;
       if (backgroundFrame === undefined) backgroundFrame = window.requestAnimationFrame(renderBackground);
@@ -891,4 +1019,16 @@ export function getWebviewHtml(webview: vscode.Webview): string {
 function createNonce(): string {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   return Array.from({ length: 32 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+}
+
+function escapeForInlineScript(value: string): string {
+  return value.replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026");
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
