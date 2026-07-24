@@ -1,8 +1,11 @@
 import type { PetState, SpriteAnimation } from "../pet/types.js";
 
+export type HookIntegrationState = "notConfigured" | "awaitingTrust" | "active";
+
 export interface PetViewModel {
   id: string;
   name: string;
+  animationAriaLabel: string;
   description?: string;
   spriteUri: string;
   columns: number;
@@ -21,11 +24,14 @@ export type ExtensionToWebviewMessage =
   | { type: "showPet"; pet: PetViewModel }
   | { type: "showEmpty"; petsDirectory: string; directoryExists: boolean }
   | { type: "showDisabled" }
-  | { type: "showError"; message: string };
+  | { type: "showError"; message: string }
+  | { type: "setHookIntegration"; state: HookIntegrationState };
 
 export type WebviewToExtensionMessage =
   | { type: "ready" }
-  | { type: "animationComplete"; state: PetState };
+  | { type: "animationComplete"; state: PetState }
+  | { type: "setupHooks" }
+  | { type: "showHooksHelp" };
 
 export function isWebviewMessage(value: unknown): value is WebviewToExtensionMessage {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -33,6 +39,9 @@ export function isWebviewMessage(value: unknown): value is WebviewToExtensionMes
   }
   const message = value as { type?: unknown; state?: unknown };
   if (message.type === "ready") {
+    return true;
+  }
+  if (message.type === "setupHooks" || message.type === "showHooksHelp") {
     return true;
   }
   return message.type === "animationComplete" && isPetState(message.state);

@@ -21,6 +21,7 @@ OpenAI and Codex are trademarks of OpenAI. This project does not use the OpenAI 
 - Shows the active pet and state in the status bar
 - Provides manual, managed App Server, and Codex Hooks integration modes
 - Aggregates activity from multiple Codex sessions and workspace folders
+- Localizes the extension UI automatically: English for English VS Code display languages, Japanese otherwise
 
 Pets are not bundled with this extension. Install at least one compatible pet before using the viewer.
 
@@ -74,12 +75,17 @@ The default integration mode is `manual`. Choose an integration mode in VS Code 
 
 Hooks are the recommended mode when you want the pet to follow activity from the official Codex IDE extension.
 
-1. Run `Pet Viewer for Codex: Install Codex Hooks Integration` from the Command Palette.
-2. In Codex, run `/hooks`.
-3. Review and trust the command added by Pet Viewer for Codex.
-4. Start a new Codex session if the current session does not pick up the new Hook configuration.
+When a pet is visible and Hooks are not configured, the PET view offers an **Enable integration** action. The Command Palette action described below remains available.
+
+1. Select **Enable integration**, or run `Pet Viewer for Codex: Install Codex Hooks Integration` from the Command Palette.
+2. Review the confirmation. It lists the `hooks.json` and receiver-script paths that will be changed. Nothing is installed unless you explicitly confirm.
+3. In Codex, run `/hooks`.
+4. Review and trust the command added by Pet Viewer for Codex. The extension does not automate or bypass Codex hook trust.
+5. Start a new Codex session if the current session does not pick up the new Hook configuration.
 
 The install command preserves existing entries in `CODEX_HOME/hooks.json`, installs a small receiver script under `CODEX_HOME/codex-pet/bin`, and changes `codexPet.integrationMode` to `hooks`.
+
+After installation, the PET view shows a waiting notice until it receives its first trusted Hook event. Codex does not expose persisted Hook trust to this extension, so receiving an event is the confirmation that the integration can run.
 
 Hook events map to pet states as follows:
 

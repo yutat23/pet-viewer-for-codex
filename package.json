@@ -1,7 +1,7 @@
 {
   "name": "pet-viewer-for-codex",
-  "displayName": "Pet Viewer for Codex",
-  "description": "Display locally installed Codex pets in the VS Code Panel.",
+  "displayName": "%extension.displayName%",
+  "description": "%extension.description%",
   "version": "0.6.1",
   "publisher": "yutat23",
   "license": "SEE LICENSE IN LICENSE",
@@ -60,7 +60,7 @@
       "panel": [
         {
           "id": "codexPet.panelContainer",
-          "title": "PET",
+          "title": "%view.containerTitle%",
           "icon": "media/paw.svg"
         }
       ]
@@ -69,104 +69,104 @@
       "codexPet.panelContainer": [
         {
           "id": "codexPet.panelView",
-          "name": "PET",
+          "name": "%view.name%",
           "type": "webview",
           "icon": "media/paw.svg",
-          "contextualTitle": "Pet Viewer for Codex"
+          "contextualTitle": "%extension.displayName%"
         }
       ]
     },
     "commands": [
       {
         "command": "codexPet.selectPet",
-        "title": "Change Pet",
-        "category": "Pet Viewer for Codex",
+        "title": "%command.changePet%",
+        "category": "%extension.displayName%",
         "icon": "$(list-selection)"
       },
       {
         "command": "codexPet.selectBackground",
-        "title": "Change Background",
-        "category": "Pet Viewer for Codex",
+        "title": "%command.changeBackground%",
+        "category": "%extension.displayName%",
         "icon": "$(symbol-color)"
       },
       {
         "command": "codexPet.selectAnimationSpeed",
-        "title": "Change Animation Speed",
-        "category": "Pet Viewer for Codex",
+        "title": "%command.changeAnimationSpeed%",
+        "category": "%extension.displayName%",
         "icon": "$(dashboard)"
       },
       {
         "command": "codexPet.setIdle",
-        "title": "Set State: Idle",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.setIdle%",
+        "category": "%extension.displayName%"
       },
       {
         "command": "codexPet.setRunning",
-        "title": "Set State: Running",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.setRunning%",
+        "category": "%extension.displayName%"
       },
       {
         "command": "codexPet.setWaiting",
-        "title": "Set State: Waiting",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.setWaiting%",
+        "category": "%extension.displayName%"
       },
       {
         "command": "codexPet.setReview",
-        "title": "Set State: Review",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.setReview%",
+        "category": "%extension.displayName%"
       },
       {
         "command": "codexPet.setFailed",
-        "title": "Set State: Failed",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.setFailed%",
+        "category": "%extension.displayName%"
       },
       {
         "command": "codexPet.refreshPets",
-        "title": "Refresh Pets",
-        "category": "Pet Viewer for Codex",
+        "title": "%command.refreshPets%",
+        "category": "%extension.displayName%",
         "icon": "$(refresh)"
       },
       {
         "command": "codexPet.openPetsDirectory",
-        "title": "Open Pets Directory",
-        "category": "Pet Viewer for Codex",
+        "title": "%command.openPetsDirectory%",
+        "category": "%extension.displayName%",
         "icon": "$(folder-opened)"
       },
       {
         "command": "codexPet.previewPet",
-        "title": "Open Pet Preview",
-        "category": "Pet Viewer for Codex",
+        "title": "%command.openPetPreview%",
+        "category": "%extension.displayName%",
         "icon": "$(open-preview)"
       },
       {
         "command": "codexPet.startAppServer",
-        "title": "Start Managed App Server",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.startAppServer%",
+        "category": "%extension.displayName%"
       },
       {
         "command": "codexPet.stopAppServer",
-        "title": "Stop Managed App Server",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.stopAppServer%",
+        "category": "%extension.displayName%"
       },
       {
         "command": "codexPet.restartAppServer",
-        "title": "Restart Managed App Server",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.restartAppServer%",
+        "category": "%extension.displayName%"
       },
       {
         "command": "codexPet.installHooks",
-        "title": "Install Codex Hooks Integration",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.installHooks%",
+        "category": "%extension.displayName%"
       },
       {
         "command": "codexPet.uninstallHooks",
-        "title": "Uninstall Codex Hooks Integration",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.uninstallHooks%",
+        "category": "%extension.displayName%"
       },
       {
         "command": "codexPet.openHooksConfiguration",
-        "title": "Open Codex Hooks Configuration",
-        "category": "Pet Viewer for Codex"
+        "title": "%command.openHooksConfiguration%",
+        "category": "%extension.displayName%"
       }
     ],
     "menus": {
@@ -206,91 +206,91 @@
       ]
     },
     "configuration": {
-      "title": "Pet Viewer for Codex",
+      "title": "%extension.displayName%",
       "properties": {
         "codexPet.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable the Pet Viewer for Codex view."
+          "description": "%config.enabled%"
         },
         "codexPet.petDirectory": {
           "type": "string",
           "default": "",
-          "description": "Override the Pet directory. Leave empty to use CODEX_HOME/pets. Reload the window after changing it."
+          "description": "%config.petDirectory%"
         },
         "codexPet.scale": {
           "type": "number",
           "default": 1,
           "minimum": 0.25,
           "maximum": 3,
-          "description": "Pet image size multiplier. The image still shrinks responsively when the PET view is smaller."
+          "description": "%config.scale%"
         },
         "codexPet.background": {
           "type": "string",
           "enum": ["none", "arcade", "autumn-forest", "blue-sky", "office", "pro-office", "grassland", "japanese-festival", "japanese-room", "living-room", "night-camp", "night-city", "space", "rainy-cafe", "treehouse", "server-room", "snowy-cabin", "sunset", "terminal", "tropical-beach", "underwater"],
           "enumDescriptions": [
-            "Use the VS Code theme background.",
-            "Neon arcade with colorful game cabinets.",
-            "Golden forest path with drifting autumn leaves.",
-            "Dreamy platform above the clouds.",
-            "Warm office with a desk and books.",
-            "Fully equipped modern software engineering office.",
-            "Sunny meadow and distant hills.",
-            "Japanese festival with lanterns, stalls, and fireworks.",
-            "Traditional Japanese room with tatami and shoji.",
-            "Comfortable living room with a soft rug.",
-            "Starry campsite with mountains and a campfire.",
-            "Neon skyline above a rain-wet rooftop.",
-            "Outer space with a ringed planet and platform.",
-            "Warm café interior beside a rainy window.",
-            "Secret wooden hideaway in a giant tree.",
-            "Cool server room with blinking rack lights.",
-            "Warm cabin surrounded by falling snow.",
-            "Warm sunset over mountains and a lake.",
-            "Programmer terminal with commands typed live.",
-            "Sunny tropical beach with palms and rolling waves.",
-            "Bright coral garden beneath the sea."
+            "%background.none%",
+            "%background.arcade%",
+            "%background.autumnForest%",
+            "%background.blueSky%",
+            "%background.office%",
+            "%background.proOffice%",
+            "%background.grassland%",
+            "%background.japaneseFestival%",
+            "%background.japaneseRoom%",
+            "%background.livingRoom%",
+            "%background.nightCamp%",
+            "%background.nightCity%",
+            "%background.space%",
+            "%background.rainyCafe%",
+            "%background.treehouse%",
+            "%background.serverRoom%",
+            "%background.snowyCabin%",
+            "%background.sunset%",
+            "%background.terminal%",
+            "%background.tropicalBeach%",
+            "%background.underwater%"
           ],
           "default": "grassland",
-          "description": "Background shown behind the Pet. You can also change it from the webview context menu."
+          "description": "%config.background%"
         },
         "codexPet.animationSpeed": {
           "type": "number",
           "default": 1,
           "minimum": 0.25,
           "maximum": 3,
-          "description": "Animation speed multiplier."
+          "description": "%config.animationSpeed%"
         },
         "codexPet.pauseWhenHidden": {
           "type": "boolean",
           "default": true,
-          "description": "Pause animation while the Pet webview is hidden."
+          "description": "%config.pauseWhenHidden%"
         },
         "codexPet.watchPetDirectory": {
           "type": "boolean",
           "default": true,
-          "description": "Reload Pets automatically when files change."
+          "description": "%config.watchPetDirectory%"
         },
         "codexPet.integrationMode": {
           "type": "string",
           "enum": ["manual", "appServer", "hooks"],
           "enumDescriptions": [
-            "Use state-changing commands only.",
-            "Use the App Server managed by this extension.",
-            "Reflect sessions from Codex Hooks, including the official Codex extension."
+            "%integration.manual%",
+            "%integration.appServer%",
+            "%integration.hooks%"
           ],
           "default": "manual",
-          "description": "Choose manual commands, the managed App Server, or Codex Hooks integration."
+          "description": "%config.integrationMode%"
         },
         "codexPet.appServer.executable": {
           "type": "string",
           "default": "codex",
-          "description": "Codex CLI executable used for the managed App Server."
+          "description": "%config.appServerExecutable%"
         },
         "codexPet.appServer.autoStart": {
           "type": "boolean",
           "default": true,
-          "description": "Start the managed App Server automatically when integrationMode is appServer."
+          "description": "%config.appServerAutoStart%"
         }
       }
     }

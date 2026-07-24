@@ -1,16 +1,26 @@
 import * as vscode from "vscode";
 import { promises as fs } from "node:fs";
+import type { UiStrings } from "../localization.js";
 import { PetRepository } from "../pet/PetRepository.js";
 import { PetStateMachine } from "../pet/PetStateMachine.js";
 import type { PetState } from "../pet/types.js";
-import type { ExtensionToWebviewMessage, PetViewModel } from "./messages.js";
+import type {
+  ExtensionToWebviewMessage,
+  HookIntegrationState,
+  PetViewModel
+} from "./messages.js";
 import { isWebviewMessage } from "./messages.js";
 import { getWebviewHtml } from "./getWebviewHtml.js";
 import {
   petBackgroundsForDisplay,
   type PetBackgroundId
 } from "./backgrounds.js";
-import { ANIMATION_SPEEDS } from "./animationSpeeds.js";
+import { animationSpeedsForDisplay } from "./animationSpeeds.js";
+
+export interface PetViewProviderActions {
+  setupHooks(): Promise<void>;
+  showHooksHelp(): Promise<void>;
+}
 
 export class PetViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "codexPet.panelView";
@@ -24,6 +34,7 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
     background: "grassland" as PetBackgroundId
   };
   private readonly stateMachine = new PetStateMachine();
+  private hookIntegrationState: HookIntegrationState = "notConfigured";
   private readonly petChangeEmitter = new vscode.EventEmitter<
     { petName: string; state: PetState } | undefined
   >();
@@ -35,7 +46,9 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
     private readonly extensionUri: vscode.Uri,
     private readonly petsDirectory: string,
     private readonly repository: PetRepository,
-    private readonly log: (message: string) => void
+    private readonly log: (message: string) => void,
+    private readonly strings: UiStrings,
+    private readonly actions: PetViewProviderActions
   ) {}
 
   public resolveWebviewView(webviewView: vscode.WebviewView): void {
@@ -56,7 +69,7 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
     }
     const panel = vscode.window.createWebviewPanel(
       "codexPet.preview",
-      "Pet Viewer for Codex Preview",
+      this.strings.previewTitle,
       vscode.ViewColumn.Beside,
       { enableScripts: true, retainContextWhenHidden: true, localResourceRoots: [this.extensionUri, vscode.Uri.file(this.petsDirectory)] }
     );
@@ -74,7 +87,7 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
       enableScripts: true,
       localResourceRoots: [this.extensionUri, vscode.Uri.file(this.petsDirectory)]
     };
-    webview.html = getWebviewHtml(webview);
+    webview.html = getWebviewHtml(webview, this.strings);
     webview.onDidReceiveMessage((message: unknown) => this.handleMessage(message));
   }
 
@@ -84,6 +97,11 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
     }
     if (message.type === "ready") {
       await this.refresh();
+      await this.post({ type: "setHookIntegration", state: this.hookIntegrationState });
+    } else if (message.type === "setupHooks") {
+      await this.actions.setupHooks();
+    } else if (message.type === "showHooksHelp") {
+      await this.actions.showHooksHelp();
     } else if (
       message.type === "animationComplete" &&
       message.state === this.stateMachine.state
@@ -96,6 +114,11 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  public async setHookIntegrationState(state: HookIntegrationState): Promise<void> {
+    this.hookIntegrationState = state;
+    await this.post({ type: "setHookIntegration", state });
+  }
+
   public async refresh(): Promise<void> {
     try {
       const result = await this.repository.refresh();
@@ -106,14 +129,17 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
       if (result.pets.length === 0 && result.issues.length > 0) {
         await this.post({
           type: "showError",
-          message: `No Pet could be loaded. ${result.issues[0]?.directoryName}: ${result.issues[0]?.message}`
+          message: `${this.strings.webview.loadFailed} ${result.issues[0]?.directoryName}: ${this.strings.translateError(result.issues[0]?.message ?? "")}`
         });
         this.petChangeEmitter.fire(undefined);
         return;
       }
       await this.render();
     } catch (error) {
-      await this.post({ type: "showError", message: error instanceof Error ? error.message : String(error) });
+      await this.post({
+        type: "showError",
+        message: this.strings.translateError(error instanceof Error ? error.message : String(error))
+      });
     }
   }
 
@@ -121,13 +147,16 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
     const result = this.repository.loadResult ?? (await this.repository.refresh());
     if (result.pets.length === 0) {
       await this.render();
-      void vscode.window.showInformationMessage("No Codex Pets were found.");
+      void vscode.window.showInformationMessage(this.strings.notifications.noPets);
       return;
     }
 
     const selected = await vscode.window.showQuickPick(
       result.pets.map((pet) => ({ label: pet.name, description: pet.description, petId: pet.id })),
-      { title: "Select a Codex Pet", placeHolder: "Choose the Pet shown in the side bar" }
+      {
+        title: this.strings.quickPick.petTitle,
+        placeHolder: this.strings.quickPick.petPlaceholder
+      }
     );
     if (selected && this.repository.select(selected.petId)) {
       this.log(`Selected Pet: ${selected.label}`);
@@ -138,13 +167,16 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
 
   public async selectBackground(): Promise<void> {
     const selected = await vscode.window.showQuickPick(
-      petBackgroundsForDisplay().map((background) => ({
+      petBackgroundsForDisplay(this.strings).map((background) => ({
         label: background.label,
         description: background.description,
         backgroundId: background.id,
         picked: background.id === this.displayOptions.background
       })),
-      { title: "Change Pet Background", placeHolder: "Choose a background for the PET view" }
+      {
+        title: this.strings.quickPick.backgroundTitle,
+        placeHolder: this.strings.quickPick.backgroundPlaceholder
+      }
     );
     if (!selected || selected.backgroundId === this.displayOptions.background) {
       return;
@@ -159,13 +191,16 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
 
   public async selectAnimationSpeed(): Promise<void> {
     const selected = await vscode.window.showQuickPick(
-      ANIMATION_SPEEDS.map((speed) => ({
+      animationSpeedsForDisplay(this.strings).map((speed) => ({
         label: speed.label,
         description: speed.description,
         speed: speed.value,
         picked: speed.value === this.displayOptions.animationSpeed
       })),
-      { title: "Change Pet Animation Speed", placeHolder: "Choose an animation speed" }
+      {
+        title: this.strings.quickPick.speedTitle,
+        placeHolder: this.strings.quickPick.speedPlaceholder
+      }
     );
     if (!selected || selected.speed === this.displayOptions.animationSpeed) {
       return;
@@ -184,11 +219,13 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
     }
     const selected = this.repository.selectedPet;
     if (!selected) {
-      void vscode.window.showInformationMessage("No Codex Pet is available.");
+      void vscode.window.showInformationMessage(this.strings.notifications.noPet);
       return;
     }
     if (!selected.animations[state]) {
-      void vscode.window.showWarningMessage(`${selected.name} does not define a ${state} animation.`);
+      void vscode.window.showWarningMessage(
+        this.strings.notifications.missingAnimation(selected.name, this.strings.stateLabels[state])
+      );
       return;
     }
     this.stateMachine.setState(state);
@@ -217,7 +254,13 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
     const state = this.stateMachine.state;
     const animation = selected.animations[state] ?? selected.animations.idle;
     if (!animation) {
-      await this.post({ type: "showError", message: `This Pet has no valid ${state} animation.` });
+      await this.post({
+        type: "showError",
+        message: this.strings.notifications.missingAnimation(
+          selected.name,
+          this.strings.stateLabels[state]
+        )
+      });
       return;
     }
     const modifiedAt = await fs.stat(selected.spriteSheetPath).then((stat) => stat.mtimeMs).catch(() => Date.now());
@@ -227,6 +270,10 @@ export class PetViewProvider implements vscode.WebviewViewProvider {
       const pet: PetViewModel = {
         id: selected.id,
         name: selected.name,
+        animationAriaLabel: this.strings.webview.animationAria(
+          selected.name,
+          this.strings.stateLabels[state]
+        ),
         description: selected.description,
         spriteUri: webview.asWebviewUri(fileUri).toString(),
         columns: selected.columns,

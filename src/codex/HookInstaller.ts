@@ -1,15 +1,17 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import {
+  hasCodexPetHooks,
   hookCommand,
   mergeCodexPetHooks,
   removeCodexPetHooks
 } from "./HookConfiguration.js";
 
-const SCRIPT_RELATIVE_PATH = path.join("codex-pet", "bin", "hook.cjs");
+export const SCRIPT_RELATIVE_PATH = path.join("codex-pet", "bin", "hook.cjs");
 
 export interface HookInstallResult {
   hooksPath: string;
+  scriptPath: string;
   command: string;
 }
 
@@ -19,27 +21,47 @@ export class HookInstaller {
     private readonly bundledScriptPath: string
   ) {}
 
+  public get hooksPath(): string {
+    return path.join(this.codexHome, "hooks.json");
+  }
+
+  public get scriptPath(): string {
+    return path.join(this.codexHome, SCRIPT_RELATIVE_PATH);
+  }
+
+  public async isInstalled(): Promise<boolean> {
+    const existing = await readConfiguration(this.hooksPath);
+    if (!hasCodexPetHooks(existing, hookCommand(this.scriptPath))) return false;
+    try {
+      await fs.access(this.scriptPath);
+      return true;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+      throw error;
+    }
+  }
+
   public async install(): Promise<HookInstallResult> {
-    const hooksPath = path.join(this.codexHome, "hooks.json");
-    const installedScriptPath = path.join(this.codexHome, SCRIPT_RELATIVE_PATH);
+    const hooksPath = this.hooksPath;
+    const installedScriptPath = this.scriptPath;
     await fs.mkdir(path.dirname(installedScriptPath), { recursive: true });
     await fs.copyFile(this.bundledScriptPath, installedScriptPath);
     const command = hookCommand(installedScriptPath);
     const existing = await readConfiguration(hooksPath);
     await atomicWriteJson(hooksPath, mergeCodexPetHooks(existing, command));
-    return { hooksPath, command };
+    return { hooksPath, scriptPath: installedScriptPath, command };
   }
 
   public async uninstall(): Promise<HookInstallResult> {
-    const hooksPath = path.join(this.codexHome, "hooks.json");
-    const installedScriptPath = path.join(this.codexHome, SCRIPT_RELATIVE_PATH);
+    const hooksPath = this.hooksPath;
+    const installedScriptPath = this.scriptPath;
     const command = hookCommand(installedScriptPath);
     const existing = await readConfiguration(hooksPath);
     await atomicWriteJson(hooksPath, removeCodexPetHooks(existing, command));
     await fs.unlink(installedScriptPath).catch((error: NodeJS.ErrnoException) => {
       if (error.code !== "ENOENT") throw error;
     });
-    return { hooksPath, command };
+    return { hooksPath, scriptPath: installedScriptPath, command };
   }
 }
 

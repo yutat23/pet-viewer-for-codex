@@ -1,12 +1,28 @@
 import type * as vscode from "vscode";
+import type { UiStrings } from "../localization.js";
 
 const IDLE_BLINK_MIN_DELAY_MS = 2000;
 const IDLE_BLINK_MAX_DELAY_MS = 5000;
 
-export function getWebviewHtml(webview: vscode.Webview): string {
+export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): string {
   const nonce = createNonce();
+  const localized = escapeForInlineScript(JSON.stringify({
+    ...strings.webview,
+    animationAria: undefined,
+    stateLabels: strings.stateLabels,
+    hooks: {
+      notConfiguredTitle: strings.hooks.notConfiguredTitle,
+      notConfiguredBody: strings.hooks.notConfiguredBody,
+      awaitingTrustTitle: strings.hooks.awaitingTrustTitle,
+      awaitingTrustBody: strings.hooks.awaitingTrustBody,
+      activeTitle: strings.hooks.activeTitle,
+      activeBody: strings.hooks.activeBody,
+      enable: strings.hooks.enable,
+      showHelp: strings.hooks.showHelp
+    }
+  }));
   return `<!doctype html>
-<html lang="en">
+<html lang="${strings.languageTag}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,19 +32,28 @@ export function getWebviewHtml(webview: vscode.Webview): string {
     html, body { width: 100%; height: 100%; }
     body { box-sizing: border-box; margin: 0; padding: 2px; overflow: hidden; color: var(--vscode-foreground); font-family: var(--vscode-font-family); }
     main { width: 100%; height: 100%; min-width: 0; min-height: 0; }
-    #pet-content { box-sizing: border-box; width: 100%; height: 100%; min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 0; }
+    #pet-content { box-sizing: border-box; width: 100%; height: 100%; min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto auto; gap: 0; }
     .stage { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; display: grid; place-items: center; overflow: hidden; border-radius: 4px; background: color-mix(in srgb, var(--vscode-editor-background) 88%, var(--vscode-foreground)); }
     .background { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; image-rendering: pixelated; }
     .pet { position: relative; z-index: 1; width: auto; height: auto; max-width: 100%; max-height: 100%; image-rendering: pixelated; }
     .stage.has-background .pet { position: absolute; left: 50%; bottom: 5%; max-width: 92%; max-height: 90%; transform: translateX(-50%); filter: drop-shadow(0 2px 1px rgb(0 0 0 / 35%)); }
     .status { margin: 0; color: var(--vscode-descriptionForeground); font-size: 12px; line-height: 16px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hook-status { margin: 4px; padding: 8px; border: 1px solid var(--vscode-widget-border); border-radius: 5px; background: var(--vscode-editorWidget-background); font-size: 12px; }
+    .hook-status strong, .hook-status span { display: block; }
+    .hook-status span { margin-top: 3px; color: var(--vscode-descriptionForeground); }
+    .hook-status button { margin-top: 7px; border: 0; padding: 4px 8px; color: var(--vscode-button-foreground); background: var(--vscode-button-background); cursor: pointer; }
+    .hook-status button:hover { background: var(--vscode-button-hoverBackground); }
+    .hook-status[data-state="active"] { display: none; }
     .empty { min-height: 180px; display: grid; place-content: center; gap: 8px; text-align: center; }
     code { word-break: break-all; font-family: var(--vscode-editor-font-family); }
     [hidden] { display: none !important; }
     @media (max-height: 34px) {
       body { padding: 1px; }
-      #pet-content { grid-template-rows: minmax(0, 1fr); }
+      #pet-content { grid-template-rows: minmax(0, 1fr) auto; }
       .status { display: none; }
+      .hook-status { font-size: 10px; padding: 2px 4px; margin: 1px; }
+      .hook-status span { display: none; }
+      .hook-status button { margin-top: 2px; padding: 2px 4px; }
     }
   </style>
 </head>
@@ -37,22 +62,32 @@ export function getWebviewHtml(webview: vscode.Webview): string {
     <section id="pet-content" hidden>
       <div id="pet-stage" class="stage"><canvas id="pet-background" class="background" aria-hidden="true" hidden></canvas><canvas id="pet" class="pet" role="img"></canvas></div>
       <p id="pet-status" class="status"></p>
+      <aside id="hook-status" class="hook-status" data-state="notConfigured" aria-live="polite">
+        <strong id="hook-title"></strong>
+        <span id="hook-body"></span>
+        <button id="hook-action" type="button"></button>
+      </aside>
     </section>
     <section id="empty-content" class="empty" hidden>
       <strong id="empty-title"></strong>
-      <span>Expected:</span>
+      <span>${escapeHtml(strings.webview.expected)}</span>
       <code id="pets-directory"></code>
     </section>
-    <section id="error-content" class="empty" hidden><strong>Codex Pet could not be loaded.</strong><span id="error-message"></span></section>
+    <section id="error-content" class="empty" hidden><strong>${escapeHtml(strings.webview.loadFailed)}</strong><span id="error-message"></span></section>
   </main>
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
+    const strings = ${localized};
     const petContent = document.getElementById('pet-content');
     const emptyContent = document.getElementById('empty-content');
     const errorContent = document.getElementById('error-content');
     const stage = document.getElementById('pet-stage');
     const background = document.getElementById('pet-background');
     const sprite = document.getElementById('pet');
+    const hookStatus = document.getElementById('hook-status');
+    const hookTitle = document.getElementById('hook-title');
+    const hookBody = document.getElementById('hook-body');
+    const hookAction = document.getElementById('hook-action');
     let timer;
     let imageGeneration = 0;
     let backgroundFrame;
@@ -60,6 +95,20 @@ export function getWebviewHtml(webview: vscode.Webview): string {
     let backgroundStartedAt = 0;
     let backgroundLastDraw = 0;
     let currentPet;
+
+    function stateLabel(state) {
+      return strings.stateLabels[state] || state;
+    }
+
+    function setHookIntegration(state) {
+      hookStatus.dataset.state = state;
+      const pending = state === 'awaitingTrust';
+      const active = state === 'active';
+      hookTitle.textContent = active ? strings.hooks.activeTitle : pending ? strings.hooks.awaitingTrustTitle : strings.hooks.notConfiguredTitle;
+      hookBody.textContent = active ? strings.hooks.activeBody : pending ? strings.hooks.awaitingTrustBody : strings.hooks.notConfiguredBody;
+      hookAction.textContent = pending ? strings.hooks.showHelp : strings.hooks.enable;
+      hookAction.hidden = active;
+    }
 
     function showOnly(element) {
       petContent.hidden = element !== petContent;
@@ -484,9 +533,9 @@ export function getWebviewHtml(webview: vscode.Webview): string {
       stopAnimation();
       currentPet = pet;
       showOnly(petContent);
-      sprite.setAttribute('aria-label', pet.name + ', ' + pet.state + ' animation');
+      sprite.setAttribute('aria-label', pet.animationAriaLabel);
       configureBackground(pet);
-      document.getElementById('pet-status').textContent = 'Status: ' + pet.state.charAt(0).toUpperCase() + pet.state.slice(1);
+      document.getElementById('pet-status').textContent = strings.statusPrefix + ' ' + stateLabel(pet.state);
       const scale = Math.max(0.25, Math.min(3, pet.scale));
       const width = Math.max(1, Math.round(pet.frameWidth * scale));
       const height = Math.max(1, Math.round(pet.frameHeight * scale));
@@ -500,7 +549,7 @@ export function getWebviewHtml(webview: vscode.Webview): string {
         const context = sprite.getContext('2d');
         if (!context) {
           showOnly(errorContent);
-          document.getElementById('error-message').textContent = 'Canvas rendering is not available.';
+          document.getElementById('error-message').textContent = strings.canvasUnavailable;
           return;
         }
         context.imageSmoothingEnabled = false;
@@ -544,7 +593,7 @@ export function getWebviewHtml(webview: vscode.Webview): string {
         if (generation !== imageGeneration) return;
         stopAnimation();
         showOnly(errorContent);
-        document.getElementById('error-message').textContent = 'The sprite image could not be loaded from the Pet directory.';
+        document.getElementById('error-message').textContent = strings.spriteLoadFailed;
       });
       sheet.src = pet.spriteUri;
     }
@@ -557,7 +606,7 @@ export function getWebviewHtml(webview: vscode.Webview): string {
         stopBackgroundAnimation();
         currentPet = undefined;
         showOnly(emptyContent);
-        document.getElementById('empty-title').textContent = data.directoryExists ? 'No Codex Pets were found.' : 'Codex Pet directory was not found.';
+        document.getElementById('empty-title').textContent = data.directoryExists ? strings.noPets : strings.directoryMissing;
         document.getElementById('pets-directory').textContent = data.petsDirectory;
       }
       if (data.type === 'showDisabled') {
@@ -565,8 +614,8 @@ export function getWebviewHtml(webview: vscode.Webview): string {
         stopBackgroundAnimation();
         currentPet = undefined;
         showOnly(emptyContent);
-        document.getElementById('empty-title').textContent = 'Codex Pet is disabled.';
-        document.getElementById('pets-directory').textContent = 'Enable codexPet.enabled in Settings.';
+        document.getElementById('empty-title').textContent = strings.disabled;
+        document.getElementById('pets-directory').textContent = strings.enableSetting;
       }
       if (data.type === 'showError') {
         stopAnimation();
@@ -575,6 +624,12 @@ export function getWebviewHtml(webview: vscode.Webview): string {
         showOnly(errorContent);
         document.getElementById('error-message').textContent = data.message;
       }
+      if (data.type === 'setHookIntegration') setHookIntegration(data.state);
+    });
+    hookAction.addEventListener('click', () => {
+      vscode.postMessage({
+        type: hookStatus.dataset.state === 'awaitingTrust' ? 'showHooksHelp' : 'setupHooks'
+      });
     });
     document.addEventListener('visibilitychange', () => {
       if (!currentPet || !currentPet.pauseWhenHidden) return;
@@ -598,4 +653,16 @@ export function getWebviewHtml(webview: vscode.Webview): string {
 function createNonce(): string {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   return Array.from({ length: 32 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+}
+
+function escapeForInlineScript(value: string): string {
+  return value.replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026");
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }

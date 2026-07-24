@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  hasCodexPetHooks,
   hookCommand,
   mergeCodexPetHooks,
   removeCodexPetHooks
@@ -24,9 +25,11 @@ describe("Codex Pet Hook configuration", () => {
   it("is idempotent and removes only its own command", () => {
     const command = hookCommand("/tmp/codex-pet/hook.cjs");
     const once = mergeCodexPetHooks({}, command);
+    expect(hasCodexPetHooks(once, command)).toBe(true);
     const twice = mergeCodexPetHooks(once, command);
     expect((twice.hooks as Record<string, unknown[]>).Stop).toHaveLength(1);
     const removed = removeCodexPetHooks(twice, command);
+    expect(hasCodexPetHooks(removed, command)).toBe(false);
     expect((removed.hooks as Record<string, unknown[]>).Stop).toEqual([]);
   });
 });

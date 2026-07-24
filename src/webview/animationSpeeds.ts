@@ -1,16 +1,17 @@
+import type { UiStrings } from "../localization.js";
+
 export interface AnimationSpeedOption {
   readonly value: number;
   readonly label: string;
   readonly description: string;
 }
 
-export const ANIMATION_SPEEDS: readonly AnimationSpeedOption[] = [
-  { value: 0.25, label: "0.25x", description: "Very slow" },
-  { value: 0.5, label: "0.5x", description: "Slow" },
-  { value: 0.75, label: "0.75x", description: "Relaxed" },
-  { value: 1, label: "1x", description: "Normal" },
-  { value: 1.25, label: "1.25x", description: "Fast" },
-  { value: 1.5, label: "1.5x", description: "Faster" },
-  { value: 2, label: "2x", description: "Very fast" },
-  { value: 3, label: "3x", description: "Maximum" }
-];
+export const ANIMATION_SPEED_VALUES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3] as const;
+
+export function animationSpeedsForDisplay(strings: UiStrings): readonly AnimationSpeedOption[] {
+  return ANIMATION_SPEED_VALUES.map((value) => ({
+    value,
+    label: `${value}x`,
+    description: strings.speedDescriptions[String(value)] ?? String(value)
+  }));
+}
