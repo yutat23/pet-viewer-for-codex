@@ -71,6 +71,10 @@ describe("Pet webview HTML", () => {
     expect(english).toContain("currentPet = data.pet");
     expect(english).toContain("if (!interactionActive) showPet(data.pet)");
     expect(english).toContain("if (currentPet) showPet(currentPet)");
+    expect(english).toContain("loadedSpriteUri === pet.spriteUri");
+    expect(english).toContain("startRendering(loadedSpriteSheet)");
+    expect(english).toContain("if (sprite.width !== width) sprite.width = width");
+    expect(english).toContain("if (sprite.height !== height) sprite.height = height");
     expect(english).toContain('"waveAction":"Wave hello"');
     expect(english).toContain('"wavingStatus":"Waving"');
     expect(japanese).toContain('"waveAction":"手を振ってもらう"');

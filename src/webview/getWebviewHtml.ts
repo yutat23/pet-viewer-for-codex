@@ -101,6 +101,8 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
     let currentPet;
     let interactionActive = false;
     let interactionCooldownUntil = 0;
+    let loadedSpriteSheet;
+    let loadedSpriteUri;
 
     function stateLabel(state) {
       return strings.stateLabels[state] || state;
@@ -565,13 +567,11 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
       const displayScale = Math.max(0.01, Math.min(requestedScale, availableScale));
       const width = Math.max(1, Math.round(pet.frameWidth * displayScale));
       const height = Math.max(1, Math.round(pet.frameHeight * displayScale));
-      sprite.width = width;
-      sprite.height = height;
-
       const generation = ++imageGeneration;
-      const sheet = new Image();
-      sheet.addEventListener('load', () => {
+      const startRendering = (sheet) => {
         if (generation !== imageGeneration) return;
+        if (sprite.width !== width) sprite.width = width;
+        if (sprite.height !== height) sprite.height = height;
         const context = sprite.getContext('2d');
         if (!context) {
           showOnly(errorContent);
@@ -619,6 +619,17 @@ export function getWebviewHtml(webview: vscode.Webview, strings: UiStrings): str
           }, delay);
         };
         render();
+      };
+      if (loadedSpriteSheet && loadedSpriteUri === pet.spriteUri) {
+        startRendering(loadedSpriteSheet);
+        return;
+      }
+      const sheet = new Image();
+      sheet.addEventListener('load', () => {
+        if (generation !== imageGeneration) return;
+        loadedSpriteSheet = sheet;
+        loadedSpriteUri = pet.spriteUri;
+        startRendering(sheet);
       });
       sheet.addEventListener('error', () => {
         if (generation !== imageGeneration) return;

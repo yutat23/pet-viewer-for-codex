@@ -185,7 +185,7 @@ Known default layouts are 8 columns by 9 rows for sprite version 1 and 8 columns
 | `running` | 7 |
 | `review` | 8 |
 
-The standard `waving` interaction uses row 3. It is non-looping and is played when the pet is activated.
+The standard `waving` interaction uses row 3, columns 0–3. It is non-looping and is played when the pet is activated; the remaining cells in that row are transparent.
 
 Custom layouts can provide `columns`, `rows`, `frameWidth`, `frameHeight`, and `animations` in `pet.json`.
 

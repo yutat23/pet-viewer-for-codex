@@ -17,7 +17,7 @@ const SUPPORTED_SPRITE_NAMES = [
 
 const DEFAULT_ANIMATIONS: Record<PetAnimationName, SpriteAnimation> = {
   idle: animation(0, 6, 160, [280, 110, 110, 140, 140, 320]),
-  waving: animation(3, 6, 140, [140, 140, 140, 140, 140, 220], false),
+  waving: animation(3, 4, 140, [140, 140, 140, 280], false),
   failed: animation(5, 8, 140, [140, 140, 140, 140, 140, 140, 140, 240]),
   waiting: animation(6, 6, 150, [150, 150, 150, 150, 150, 260]),
   running: animation(7, 6, 120, [120, 120, 120, 120, 120, 220]),
