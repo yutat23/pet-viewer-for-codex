@@ -2,7 +2,7 @@
   "name": "pet-viewer-for-codex",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "publisher": "yutat23",
   "license": "SEE LICENSE IN LICENSE",
   "author": {
@@ -259,8 +259,12 @@
           "anyOf": [
             {
               "type": "string",
-              "enum": ["auto"],
-              "enumDescriptions": ["%size.autoDescription%"]
+              "enum": [
+                "auto"
+              ],
+              "enumDescriptions": [
+                "%size.autoDescription%"
+              ]
             },
             {
               "type": "number",
@@ -272,7 +276,30 @@
         },
         "codexPet.background": {
           "type": "string",
-          "enum": ["none", "custom", "arcade", "autumn-forest", "blue-sky", "office", "pro-office", "grassland", "japanese-festival", "japanese-room", "living-room", "night-camp", "night-city", "space", "rainy-cafe", "treehouse", "server-room", "snowy-cabin", "sunset", "terminal", "tropical-beach", "underwater"],
+          "enum": [
+            "none",
+            "custom",
+            "arcade",
+            "autumn-forest",
+            "blue-sky",
+            "office",
+            "pro-office",
+            "grassland",
+            "japanese-festival",
+            "japanese-room",
+            "living-room",
+            "night-camp",
+            "night-city",
+            "space",
+            "rainy-cafe",
+            "treehouse",
+            "server-room",
+            "snowy-cabin",
+            "sunset",
+            "terminal",
+            "tropical-beach",
+            "underwater"
+          ],
           "enumDescriptions": [
             "%background.none%",
             "%background.custom%",
@@ -331,7 +358,11 @@
         },
         "codexPet.integrationMode": {
           "type": "string",
-          "enum": ["manual", "appServer", "hooks"],
+          "enum": [
+            "manual",
+            "appServer",
+            "hooks"
+          ],
           "enumDescriptions": [
             "%integration.manual%",
             "%integration.appServer%",
@@ -364,6 +395,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.9.2",
     "esbuild": "^0.25.0",
     "typescript": "^5.8.0",
     "vitest": "^3.2.0"

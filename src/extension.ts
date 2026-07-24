@@ -17,6 +17,7 @@ import { normalizeBackgroundOpacity } from "./webview/customBackground.js";
 import { normalizePetScale, type PetScale } from "./webview/petSizes.js";
 
 const SELECTED_PET_KEY = "codexPet.selectedPet";
+const HOOK_EVENT_OBSERVED_KEY = "codexPet.hookEventObserved";
 
 export function activate(context: vscode.ExtensionContext): void {
   const strings = getStrings(vscode.env.language);
@@ -39,7 +40,7 @@ export function activate(context: vscode.ExtensionContext): void {
     codexHome,
     context.asAbsolutePath(path.join("scripts", "codex-pet-hook.cjs"))
   );
-  let hookEventObserved = false;
+  let hookEventObserved = context.globalState.get<boolean>(HOOK_EVENT_OBSERVED_KEY, false);
   let provider: PetViewProvider;
   const showHooksHelp = async (): Promise<void> => {
     const choice = await vscode.window.showInformationMessage(
@@ -58,8 +59,9 @@ export function activate(context: vscode.ExtensionContext): void {
     );
     if (choice !== strings.hooks.enable) return;
     try {
-      hookEventObserved = false;
       const result = await hookInstaller.install();
+      hookEventObserved = false;
+      await context.globalState.update(HOOK_EVENT_OBSERVED_KEY, false);
       log(`Installed Pet Viewer for Codex hooks in ${result.hooksPath}`);
       await vscode.workspace.getConfiguration("codexPet").update(
         "integrationMode",
@@ -167,7 +169,9 @@ export function activate(context: vscode.ExtensionContext): void {
       log,
       onPetState: (state) => void provider.setState(state),
       onEventReceived: () => {
+        if (hookEventObserved) return;
         hookEventObserved = true;
+        void context.globalState.update(HOOK_EVENT_OBSERVED_KEY, true);
         void provider.setHookIntegrationState("active");
       }
     });
@@ -262,6 +266,7 @@ export function activate(context: vscode.ExtensionContext): void {
         log(`Removed Pet Viewer for Codex hooks from ${result.hooksPath}`);
         stopHookReceiver();
         hookEventObserved = false;
+        await context.globalState.update(HOOK_EVENT_OBSERVED_KEY, false);
         const configuration = vscode.workspace.getConfiguration("codexPet");
         if (configuration.get<string>("integrationMode") === "hooks") {
           await configuration.update("integrationMode", "manual", vscode.ConfigurationTarget.Global);

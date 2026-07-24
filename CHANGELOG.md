@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1
+
+- Persist successful Codex Hooks event detection across VS Code restarts.
+
 ## 0.6.1
 
 - Add animation speed presets to the PET view context menu.
