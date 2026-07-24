@@ -2,7 +2,7 @@
   "name": "pet-viewer-for-codex",
   "displayName": "%extension.displayName%",
   "description": "%extension.description%",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "publisher": "yutat23",
   "license": "SEE LICENSE IN LICENSE",
   "author": {
