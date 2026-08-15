@@ -34,7 +34,7 @@ Pets are not bundled with this extension. Install at least one compatible pet be
 
 ## Installation
 
-Install the extension from the Visual Studio Code Marketplace or run:
+Install the extension from the [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=yutat23.pet-viewer-for-codex) or run:
 
 ```shell
 code --install-extension yutat23.pet-viewer-for-codex
